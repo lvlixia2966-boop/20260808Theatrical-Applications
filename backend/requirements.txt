@@ -1,0 +1,22 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+sqlalchemy==2.0.36
+pymysql==1.1.1
+cryptography==44.0.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-jose[cryptography]==3.3.0
+bcrypt==4.2.1
+python-multipart==0.0.20
+requests==2.32.3
+httpx==0.28.1
+# 场次直播：会场收音（服务器声卡线路输入采集；未安装时自动回退演示采集器）
+sounddevice==0.5.1
+# 豆包语音 openspeech（流式 ASR / 流式 TTS 的 WebSocket 客户端）
+websocket-client==1.8.0
+websockets==14.1
+# 双端实时翻译：WebRTC 音频网关（aiortc 依赖 av 做编解码与重采样）
+aiortc==1.9.0
+# 知识库 RAG：中文分词 + BM25 关键词召回（向量走豆包 embedding，纯 Python 余弦融合）
+jieba==0.42.1
+rank-bm25==0.2.2

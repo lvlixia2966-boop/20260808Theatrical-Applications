@@ -1,0 +1,13 @@
+# 凉山伴游 · 纯伴游导览系统 后端依赖（与主项目后端同栈，便于统一运维）
+fastapi==0.115.6
+uvicorn==0.34.0
+sqlalchemy==2.0.36
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-jose[cryptography]==3.3.0
+bcrypt==4.2.1
+python-multipart==0.0.20
+httpx==0.28.1
+# 耳机语音沟通：豆包 ASR（WebSocket 单发识别）与录音解码（webm/opus → PCM）
+websocket-client==1.8.0
+av==14.2.0

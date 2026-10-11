@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>沙盒收银台 · Sandbox Cashier</title>
+  <style>
+    /* 沙盒演示收银台：微信/支付宝/PayPal 三风格皮肤，仅演示不产生真实扣款 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f5f5; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .cashier {
+      width: 100%; max-width: 400px; background: #fff; border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.08); overflow: hidden;
+    }
+    .head { padding: 20px 24px; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .head .logo { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,.25);
+      display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .head .name { font-size: 17px; font-weight: 700; }
+    .head .mode { margin-left: auto; font-size: 11px; background: rgba(255,255,255,.22);
+      padding: 3px 10px; border-radius: 999px; }
+    .head.wechat { background: #07c160; }
+    .head.alipay { background: #1677ff; }
+    .head.paypal { background: #003087; }
+    .body { padding: 28px 24px 24px; text-align: center; }
+    .amount-label { font-size: 13px; color: #999; }
+    .amount { font-size: 40px; font-weight: 700; color: #222; margin: 8px 0 4px; }
+    .amount small { font-size: 18px; font-weight: 600; margin-right: 4px; }
+    .subject { font-size: 14px; color: #555; margin-bottom: 6px; }
+    .order-no { font-size: 12px; color: #aaa; word-break: break-all; }
+    .sandbox-tip {
+      margin: 18px 0 0; font-size: 12px; color: #b8860b; background: #fff8e1;
+      border: 1px dashed #e6c26a; border-radius: 8px; padding: 8px 12px; line-height: 1.6;
+    }
+    .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    button { width: 100%; padding: 13px; font-size: 15px; font-weight: 600;
+      border: none; border-radius: 10px; cursor: pointer; transition: filter .15s; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-pay { color: #fff; }
+    .head.wechat ~ .body .btn-pay { background: #07c160; }
+    .head.alipay ~ .body .btn-pay { background: #1677ff; }
+    .head.paypal ~ .body .btn-pay { background: #003087; }
+    .btn-pay:hover { filter: brightness(1.06); }
+    .btn-cancel { background: #f2f2f2; color: #666; }
+    .status { display: none; margin-top: 18px; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 600; }
+    .status.ok { display: block; background: #e8f7ee; color: #07a254; }
+    .status.err { display: block; background: #fdecec; color: #d93025; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,.15);
+      border-top-color: currentColor; border-radius: 50%; animation: spin .8s linear infinite;
+      vertical-align: -2px; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="cashier">
+    <div class="head" id="head">
+      <div class="logo" id="logo">💰</div>
+      <div class="name" id="ch-name">沙盒收银台</div>
+      <div class="mode">SANDBOX</div>
+    </div>
+    <div class="body">
+      <div class="amount-label" data-t="payTo">支付金额</div>
+      <div class="amount"><small id="currency">CNY</small><span id="amount">0.00</span></div>
+      <div class="subject" id="subject">—</div>
+      <div class="order-no" id="orderNo">—</div>
+      <div class="sandbox-tip" data-t="tip">沙盒演示环境：不会产生真实扣款，点击下方按钮模拟支付结果。</div>
+      <div class="actions">
+        <button class="btn-pay" id="btnPay" data-t="payNow">模拟支付成功</button>
+        <button class="btn-cancel" id="btnCancel" data-t="cancel">取消支付</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    /* 多语言：跟随 localStorage.app_lang（与主站一致），缺省中文 */
+    const T = {
+      zh: { payTo: '支付金额', tip: '沙盒演示环境：不会产生真实扣款，点击下方按钮模拟支付结果。', payNow: '模拟支付成功', cancel: '取消支付', paying: '正在确认支付…', ok: '支付成功！订单已完成。', fail: '支付失败或已取消。', back: '返回' },
+      en: { payTo: 'Amount', tip: 'Sandbox demo: no real charge. Click below to simulate the payment result.', payNow: 'Simulate Successful Payment', cancel: 'Cancel', paying: 'Confirming payment…', ok: 'Payment successful! Order completed.', fail: 'Payment failed or cancelled.', back: 'Back' }
+    };
+    const lang = (localStorage.getItem('app_lang') || 'zh').startsWith('zh') ? 'zh' : 'en';
+    document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T[lang][el.dataset.t] || el.textContent; });
+
+    const q = new URLSearchParams(location.search);
+    const orderNo = q.get('order_no') || '';
+    const channel = q.get('channel') || 'wechat';
+    const SKIN = {
+      wechat: { name: '微信支付', logo: '💬' },
+      alipay: { name: '支付宝', logo: '💙' },
+      paypal: { name: 'PayPal', logo: '🅿️' },
+    };
+    const skin = SKIN[channel] || SKIN.wechat;
+    document.getElementById('ch-name').textContent = skin.name;
+    document.getElementById('logo').textContent = skin.logo;
+    document.getElementById('head').classList.add(channel);
+    document.getElementById('amount').textContent = q.get('amount') || '0.00';
+    document.getElementById('currency').textContent = q.get('currency') || 'CNY';
+    document.getElementById('subject').textContent = q.get('subject') || '—';
+    document.getElementById('orderNo').textContent = orderNo;
+
+    const btnPay = document.getElementById('btnPay');
+    const btnCancel = document.getElementById('btnCancel');
+    const statusBox = document.getElementById('status');
+    const setStatus = (cls, text) => { statusBox.className = 'status ' + cls; statusBox.textContent = text; };
+
+    async function post(url, body) {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return resp.json();
+    }
+
+    /* PayPal 真沙盒回跳：URL 带 token=PayerID，走 capture；其余走模拟确认 */
+    const paypalToken = q.get('token');
+    btnPay.addEventListener('click', async () => {
+      btnPay.disabled = true; btnCancel.disabled = true;
+      setStatus('err', '');
+      statusBox.className = 'status ok';
+      statusBox.innerHTML = '<span class="spinner"></span>' + T[lang].paying;
+      try {
+        const body = paypalToken
+          ? await post(`/api/payments/orders/${orderNo}/paypal-capture`, { token: paypalToken })
+          : await post(`/api/payments/mock/${orderNo}/confirm`);
+        if (body.code === 0 && body.data && body.data.status === 'paid') {
+          setStatus('ok', T[lang].ok);
+          btnPay.style.display = 'none'; btnCancel.textContent = T[lang].back;
+          btnCancel.disabled = false;
+          btnCancel.onclick = () => { location.href = '/'; };
+        } else {
+          throw new Error(body.message || 'failed');
+        }
+      } catch (e) {
+        setStatus('err', T[lang].fail);
+        btnPay.disabled = false; btnCancel.disabled = false;
+      }
+    });
+
+    btnCancel.addEventListener('click', () => {
+      if (history.length > 1) history.back(); else location.href = '/';
+    });
+  </script>
+</body>
+</html>

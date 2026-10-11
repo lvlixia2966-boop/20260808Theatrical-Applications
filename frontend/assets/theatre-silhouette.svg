@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" fill="none">
+  <!-- 剧场楼剪影：三段式 + 飞檐翘角 + 坡屋顶 -->
+  <defs>
+    <linearGradient id="roofG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A2018"/>
+      <stop offset="1" stop-color="#1A1410"/>
+    </linearGradient>
+    <linearGradient id="bodyG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241C14"/>
+      <stop offset="1" stop-color="#16120E"/>
+    </linearGradient>
+    <linearGradient id="baseG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1E1813"/>
+      <stop offset="1" stop-color="#141010"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 主屋顶：大坡顶 + 飞檐翘角 -->
+  <path d="M 90 175 Q 180 130 300 118 Q 440 105 600 105 Q 760 105 900 118 Q 1020 130 1110 175
+           L 1130 185 Q 1140 190 1128 188
+           L 1105 182 Q 1090 178 1060 176
+           L 1060 200 L 1068 200 L 1068 212 L 1052 212 L 1052 200 L 1060 200
+           L 140 200 L 140 212 L 124 212 L 124 200 L 132 200 L 132 176
+           Q 100 178 70 182 L 47 188 Q 35 190 45 185 Z"
+        fill="url(#roofG)" stroke="#C9A25E" stroke-width="1.5" stroke-opacity="0.18"/>
+
+  <!-- 飞檐翘角（左右挑角） -->
+  <path d="M 90 175 Q 65 170 42 180 Q 58 168 80 162 Q 95 158 95 168 Z" fill="#1A1410"/>
+  <path d="M 1110 175 Q 1135 170 1158 180 Q 1142 168 1120 162 Q 1105 158 1105 168 Z" fill="#1A1410"/>
+
+  <!-- 正脊（屋脊线） -->
+  <line x1="200" y1="112" x2="1000" y2="112" stroke="#C9A25E" stroke-width="2" stroke-opacity="0.25"/>
+  <!-- 正脊两端鸱吻 -->
+  <path d="M 196 118 Q 190 105 200 100 Q 210 105 204 118 Z" fill="#2A2018"/>
+  <path d="M 996 118 Q 990 105 1000 100 Q 1010 105 1004 118 Z" fill="#2A2018"/>
+
+  <!-- 二层楼身 -->
+  <rect x="170" y="200" width="860" height="130" fill="url(#bodyG)"/>
+  <!-- 二层栏杆（回纹简化） -->
+  <line x1="170" y1="230" x2="1030" y2="230" stroke="#C9A25E" stroke-width="1" stroke-opacity="0.12"/>
+  <!-- 二层柱列 -->
+  <rect x="240" y="200" width="10" height="130" fill="#1A1410"/>
+  <rect x="380" y="200" width="10" height="130" fill="#1A1410"/>
+  <rect x="520" y="200" width="10" height="130" fill="#1A1410"/>
+  <rect x="670" y="200" width="10" height="130" fill="#1A1410"/>
+  <rect x="810" y="200" width="10" height="130" fill="#1A1410"/>
+  <rect x="950" y="200" width="10" height="130" fill="#1A1410"/>
+
+  <!-- 台基（底层） -->
+  <rect x="130" y="330" width="940" height="110" fill="url(#baseG)"/>
+  <rect x="130" y="330" width="940" height="3" fill="#C9A25E" fill-opacity="0.12"/>
+  <!-- 台阶层 -->
+  <rect x="100" y="440" width="1000" height="18" fill="#191410"/>
+  <rect x="80" y="458" width="1040" height="14" fill="#150F0B"/>
+
+  <!-- 底层柱列与门 -->
+  <rect x="200" y="330" width="14" height="110" fill="#1A1410"/>
+  <rect x="340" y="330" width="14" height="110" fill="#1A1410"/>
+  <rect x="480" y="330" width="14" height="110" fill="#1A1410"/>
+  <rect x="620" y="330" width="14" height="110" fill="#1A1410"/>
+  <rect x="760" y="330" width="14" height="110" fill="#1A1410"/>
+  <rect x="900" y="330" width="14" height="110" fill="#1A1410"/>
+  <!-- 正门（暖光透出） -->
+  <rect x="550" y="360" width="100" height="80" rx="3" fill="#C9A25E" fill-opacity="0.06"/>
+  <rect x="550" y="360" width="100" height="80" rx="3" stroke="#C9A25E" stroke-width="1" stroke-opacity="0.2" fill="none"/>
+  <line x1="600" y1="360" x2="600" y2="440" stroke="#C9A25E" stroke-width="1" stroke-opacity="0.12"/>
+  <!-- 侧门 -->
+  <rect x="290" y="380" width="60" height="60" rx="3" fill="#C9A25E" fill-opacity="0.04"/>
+  <rect x="850" y="380" width="60" height="60" rx="3" fill="#C9A25E" fill-opacity="0.04"/>
+  <!-- 灯笼挂饰（左右对称两盏，微光） -->
+  <circle cx="330" cy="380" r="14" fill="#C43C31" fill-opacity="0.18"/>
+  <circle cx="330" cy="380" r="9" fill="#C43C31" fill-opacity="0.3"/>
+  <line x1="330" y1="366" x2="330" y2="371" stroke="#C9A25E" stroke-width="1" stroke-opacity="0.2"/>
+  <circle cx="870" cy="380" r="14" fill="#C43C31" fill-opacity="0.18"/>
+  <circle cx="870" cy="380" r="9" fill="#C43C31" fill-opacity="0.3"/>
+  <line x1="870" y1="366" x2="870" y2="371" stroke="#C9A25E" stroke-width="1" stroke-opacity="0.2"/>
+
+  <!-- 台阶 -->
+  <rect x="80" y="458" width="1040" height="4" fill="#C9A25E" fill-opacity="0.06"/>
+</svg>

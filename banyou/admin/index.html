@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>凉山伴游 · 管理后台</title>
+<link rel="stylesheet" href="assets/leaflet.css">
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="login-view" hidden>
+  <div class="login-card">
+    <h1>凉山伴游</h1>
+    <p class="sub">纯伴游导览系统 · 管理后台</p>
+    <label>用户名</label>
+    <input id="login-user" autocomplete="username" value="admin">
+    <label>密码</label>
+    <input id="login-pass" type="password" autocomplete="current-password" placeholder="请输入密码">
+    <button class="btn" id="login-btn">登 录</button>
+    <p class="err" id="login-err"></p>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="main-view" hidden>
+  <aside id="sidebar">
+    <div class="brand">🏔️ 凉山伴游</div>
+    <nav id="menu">
+      <a data-sec="dashboard" class="active"><i data-lucide="layout-dashboard"></i>数据概览</a>
+      <a data-sec="areas"><i data-lucide="mountain"></i>景区管理</a>
+      <a data-sec="spots"><i data-lucide="map-pin"></i>点位管理</a>
+      <a data-sec="routes"><i data-lucide="route"></i>路线管理</a>
+      <a data-sec="products"><i data-lucide="shopping-bag"></i>文创商品</a>
+      <a data-sec="orders"><i data-lucide="receipt-text"></i>订单管理</a>
+      <a data-sec="settings"><i data-lucide="settings-2"></i>应用设置</a>
+      <a data-sec="api"><i data-lucide="plug"></i>API 接入</a>
+      <a data-sec="account"><i data-lucide="user-cog"></i>账号</a>
+    </nav>
+    <div class="side-foot">
+      <a href="/" target="_blank">打开游客端 ↗</a>
+      <button id="logout-btn">退出登录</button>
+    </div>
+  </aside>
+
+  <main id="content">
+    <section id="sec-dashboard" class="sec">
+      <h2>数据概览</h2>
+      <div class="stat-row" id="stat-cards"></div>
+      <div class="card pad">
+        <h3>运营提示</h3>
+        <p class="muted">游客端与小程序一律通过 <code>/api/v1</code> 开放接口读取内容；此处修改保存后实时生效，无需重启服务。详见「API 接入」页。</p>
+      </div>
+    </section>
+
+    <section id="sec-areas" class="sec" hidden>
+      <div class="sec-head"><h2>景区管理</h2><button class="btn" id="area-new">＋ 新建景区</button></div>
+      <div class="card"><table id="area-table" class="tbl"></table></div>
+    </section>
+
+    <section id="sec-spots" class="sec" hidden>
+      <div class="sec-head">
+        <h2>点位管理</h2>
+        <select id="spot-area-filter"></select>
+        <button class="btn" id="spot-new">＋ 新建点位</button>
+      </div>
+      <div class="card"><table id="spot-table" class="tbl"></table></div>
+    </section>
+
+    <section id="sec-routes" class="sec" hidden>
+      <div class="sec-head">
+        <h2>路线管理</h2>
+        <select id="route-area-filter"></select>
+        <button class="btn" id="route-new">＋ 新建路线</button>
+      </div>
+      <div class="card"><table id="route-table" class="tbl"></table></div>
+    </section>
+
+    <section id="sec-products" class="sec" hidden>
+      <div class="sec-head"><h2>文创商品</h2><button class="btn" id="product-new">＋ 新建商品</button></div>
+      <div class="card pad muted" style="margin-bottom:14px">
+        不打扰原则：商品不会主动推送给游客；关联「点位」的只在对应讲解页底部露出一行小条，
+        关联「景区」的出现在该景区好物浮层，都不关联则为全域好物。
+      </div>
+      <div class="card"><table id="product-table" class="tbl"></table></div>
+    </section>
+
+    <section id="sec-orders" class="sec" hidden>
+      <div class="sec-head">
+        <h2>订单管理</h2>
+        <select id="order-status-filter">
+          <option value="">全部状态</option>
+          <option value="pending">待支付</option>
+          <option value="paid">已支付</option>
+          <option value="shipped">已发货</option>
+          <option value="cancelled">已取消</option>
+        </select>
+      </div>
+      <div class="card"><table id="order-table" class="tbl"></table></div>
+    </section>
+
+    <section id="sec-settings" class="sec" hidden>
+      <div class="sec-head"><h2>应用设置</h2><button class="btn" id="settings-save">保存全部</button></div>
+      <div id="settings-body"></div>
+    </section>
+
+    <section id="sec-api" class="sec" hidden>
+      <div class="sec-head"><h2>API 接入说明</h2></div>
+      <div class="card pad api-doc">
+        <h3>开放接口（游客端 / 三方平台，只读）</h3>
+        <table class="tbl slim">
+          <tr><th>接口</th><th>说明</th></tr>
+          <tr><td><code>GET /api/v1/bootstrap</code></td><td>应用冷启动：公开设置 + 区域列表（一次拉全）</td></tr>
+          <tr><td><code>GET /api/v1/scenic-areas</code></td><td>景区列表，支持 <code>?region=liangshan&city=西昌市&keyword=泸沽湖</code></td></tr>
+          <tr><td><code>GET /api/v1/scenic-areas/{id}</code></td><td>景区详情（含点位与路线）</td></tr>
+          <tr><td><code>GET /api/v1/spots/{id}</code></td><td>点位详情（多语言讲解稿、音频、坐标、触发半径）</td></tr>
+          <tr><td><code>GET /api/v1/routes/{id}</code></td><td>伴游路线详情（按 seq 有序点位）</td></tr>
+          <tr><td><code>GET /api/v1/nearby?lat=&lng=</code></td><td>按距离排序的附近景区</td></tr>
+        </table>
+        <h3>管理接口（JWT 鉴权）</h3>
+        <p class="muted">前缀 <code>/api/admin</code>：登录 <code>POST /login</code>；景区/点位/路线/区域 CRUD；<code>PUT /routes/{id}/stops</code> 路线排点；<code>GET/PUT /settings</code> 应用设置；<code>POST /uploads</code> 素材上传（图片/音频，≤20MB）。鉴权方式：<code>Authorization: Bearer &lt;token&gt;</code>。</p>
+        <h3>在线文档</h3>
+        <p class="muted">启动后访问 <a href="/docs" target="_blank">/docs</a>（Swagger UI）查看全部接口定义。</p>
+      </div>
+    </section>
+
+    <section id="sec-account" class="sec" hidden>
+      <div class="sec-head"><h2>账号</h2></div>
+      <div class="card pad" style="max-width:420px">
+        <h3>修改密码</h3>
+        <label>原密码</label><input type="password" id="pwd-old">
+        <label>新密码（至少 6 位）</label><input type="password" id="pwd-new">
+        <button class="btn" id="pwd-save">保存</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 通用弹窗 -->
+<div id="modal-mask" hidden>
+  <div id="modal" role="dialog"></div>
+</div>
+
+<div id="toast"></div>
+
+<script src="assets/leaflet.js"></script>
+<script src="assets/lucide.min.js"></script>
+<script src="assets/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文创雅集 · v3 重构预览（票根方案）</title>
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<style>
+/* ============================================================
+   文创视图 v3 重构预览 —— 「票根」方案（独立文件，不影响线上）
+   概念：整个文创视图是一张可撕的戏票。戏院海报的平面印刷语言：
+     大面积浓墨色块 + 朱砂斜披绸 + 齿孔票根卡 + 骑缝朱印。
+   Token：宣纸 #F2E8D8 / 浓墨 #1A1410 / 朱砂 #B5231F / 靛青 #2B4C64 / 鎏金 #C8861E
+   字体：Noto Serif SC 900 海报大字；Ma Shan Zheng 披绸与印章；Outfit 票号数字。
+   与 v2（暗色戏单）互为对照：v2 是夜场灯下，v3 是日场海报。
+   ============================================================ */
+:root{
+  --paper:#F2E8D8; --paper-deep:#E9DCC4; --ink:#1A1410;
+  --cinnabar:#B5231F; --indigo:#2B4C64; --gold:#C8861E;
+  --muted:#7A6A56;
+  --serif:'Noto Serif SC',serif; --brush:'Ma Shan Zheng',cursive; --latin:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:14px;line-height:1.7}
+/* 纸张肌理：细密网点（印刷 halftone 感），比纯色底多一层“纸” */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(26,20,16,.05) 1px,transparent 1px);
+  background-size:5px 5px;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+img{display:block;width:100%;height:100%;object-fit:cover}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+
+/* ── 顶部条 ─────────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+  padding:12px 24px;background:var(--ink);color:var(--paper);
+}
+.brand-seal{
+  width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--cinnabar);font-family:var(--brush);font-size:19px;line-height:1;
+  border-radius:5px;transform:rotate(-3deg);
+}
+.topbar .t{font-family:var(--brush);font-size:21px;letter-spacing:.06em}
+.topbar .no{margin-left:auto;font-family:var(--latin);font-size:11px;letter-spacing:.24em;color:rgba(242,232,216,.6)}
+.preview-note{padding:7px 24px;font-size:11px;color:var(--muted);text-align:center;font-family:var(--latin);letter-spacing:.06em}
+
+/* ── 海报首屏（签名前置：大戏海报） ─────────────────────── */
+.poster{
+  max-width:1120px;margin:30px auto 0;padding:0 24px;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:0;
+  min-height:380px;box-shadow:0 22px 50px rgba(26,20,16,.18);
+}
+.poster .txt{
+  background:var(--ink);color:var(--paper);padding:44px 40px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+/* 朱砂斜披绸：海报上的红绸斜带 */
+.poster .txt::after{
+  content:'散场 · 把戏带走';position:absolute;top:34px;right:-64px;
+  background:var(--cinnabar);color:var(--paper);font-family:var(--brush);
+  font-size:16px;letter-spacing:.2em;padding:7px 76px;
+  transform:rotate(-38deg);box-shadow:0 4px 14px rgba(0,0,0,.4);
+}
+.poster .eyebrow{font-family:var(--latin);font-size:11px;letter-spacing:.34em;color:var(--gold)}
+.poster h1{font-weight:900;font-size:56px;line-height:1.12;margin:14px 0 12px;letter-spacing:.01em}
+.poster h1 em{font-style:normal;color:var(--cinnabar);-webkit-text-stroke:0}
+.poster p{font-size:13px;color:rgba(242,232,216,.72);max-width:40ch}
+.poster .cta{
+  display:inline-flex;align-items:center;gap:10px;margin-top:26px;align-self:flex-start;
+  background:var(--cinnabar);color:var(--paper);font-weight:700;font-size:14px;
+  padding:13px 30px;border-radius:2px;letter-spacing:.08em;
+  transition:transform .25s ease-out,box-shadow .25s ease-out;
+}
+.poster .cta:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(181,35,31,.4)}
+.poster .pic{position:relative;background:var(--cinnabar);overflow:hidden}
+.poster .pic img{filter:saturate(1.05)}
+/* 票号存根联：贴在海报右下角，压住图文交界 */
+.poster .stub{
+  position:absolute;right:18px;bottom:18px;background:var(--paper);color:var(--ink);
+  font-family:var(--latin);font-size:11px;letter-spacing:.14em;padding:8px 16px;
+  border-left:2px dashed var(--cinnabar);display:flex;align-items:center;gap:10px;
+}
+.poster .stub b{font-size:15px;font-weight:600}
+
+/* ── 检票口导航（票根撕条样式） ─────────────────────────── */
+.gate{max-width:1120px;margin:26px auto 0;padding:0 24px;display:flex;gap:12px;flex-wrap:wrap}
+.gate button{
+  position:relative;background:var(--paper-deep);color:var(--muted);
+  font-size:14px;font-weight:700;letter-spacing:.1em;padding:12px 26px 12px 46px;
+  clip-path:polygon(14px 0,100% 0,100% 100%,14px 100%,0 50%);
+  transition:all .25s ease-out;
+}
+.gate button:first-child{clip-path:polygon(0 0,100% 0,100% 100%,0 100%);padding-left:26px}
+.gate button .en{display:block;font-family:var(--latin);font-weight:400;font-size:9px;letter-spacing:.26em;margin-top:1px}
+.gate button:hover{color:var(--ink)}
+.gate button.on{background:var(--ink);color:var(--paper)}
+.gate button.on .en{color:var(--gold)}
+
+/* ── 票根卡（核心签名组件） ─────────────────────────────── */
+.stage{max-width:1120px;margin:22px auto 0;padding:0 24px 80px}
+.panel{display:none;animation:reveal .45s ease-out}
+.panel.on{display:block}
+@keyframes reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.sec-head h2{font-weight:900;font-size:28px}
+.sec-head .rule{flex:1;height:3px;background:var(--ink);min-width:40px}
+.sec-head .sub{font-size:12px;color:var(--muted)}
+
+/* 横版票根：左主联 + 齿孔细列 + 右存根联（4 列，stub 不再换行） */
+.tickets{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.ticket{
+  display:grid;grid-template-columns:150px 1fr 2px 64px;background:var(--paper);
+  border:1.5px solid var(--ink);position:relative;
+  transition:transform .25s ease-out,box-shadow .25s ease-out;
+}
+.ticket:hover{transform:translateY(-3px);box-shadow:6px 8px 0 rgba(26,20,16,.14)}
+.ticket .im{position:relative;background:var(--paper-deep)}
+.ticket .bd{padding:16px 16px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.ticket .nm{font-weight:900;font-size:17px}
+.ticket .ds{font-size:12px;color:var(--muted)}
+.ticket .meta{display:flex;gap:14px;margin-top:auto;padding-top:8px;font-size:11px;color:var(--ink)}
+.ticket .meta b{font-family:var(--latin);font-weight:600;color:var(--cinnabar)}
+/* 齿孔撕沿线：1px 细列竖虚线 + 上下半圆孔（孔透出页面纸底） */
+.ticket .perf{
+  position:relative;
+  background-image:linear-gradient(180deg,var(--ink) 50%,transparent 50%);
+  background-size:2px 9px;
+}
+.ticket .perf::before,.ticket .perf::after{
+  content:'';position:absolute;left:-7px;width:15px;height:15px;border-radius:50%;
+  background:var(--paper);border:1.5px solid var(--ink);
+}
+.ticket .perf::before{top:-9px}
+.ticket .perf::after{bottom:-9px}
+/* 存根联：竖排票号 + 骑缝小印 */
+.ticket .stub{
+  writing-mode:vertical-rl;display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;font-family:var(--latin);font-size:10px;letter-spacing:.18em;color:var(--muted);
+}
+.ticket .stub .mini{
+  writing-mode:horizontal-tb;font-family:var(--brush);font-size:12px;color:var(--paper);
+  background:var(--cinnabar);border-radius:3px;padding:2px 5px;transform:rotate(-4deg);
+}
+.ticket .pr{font-family:var(--latin);font-weight:600;font-size:15px;color:var(--cinnabar)}
+
+/* 主推票根（通栏大票） */
+.ticket.mega{grid-column:span 2;grid-template-columns:1fr 1fr 2px 64px}
+.ticket.mega .im{min-height:260px}
+.ticket.mega .bd{padding:26px 26px 20px}
+.ticket.mega .nm{font-size:26px;font-weight:900}
+.ticket.mega .ds{font-size:13px}
+.ticket.mega .buy{
+  align-self:flex-start;margin-top:12px;background:var(--ink);color:var(--paper);
+  font-size:13px;font-weight:700;padding:9px 24px;letter-spacing:.08em;
+  transition:background .25s ease-out;
+}
+.ticket.mega .buy:hover{background:var(--cinnabar)}
+.ticket.mega .perf::before,.ticket.mega .perf::after{background:var(--paper)}
+
+/* 购物点：竖版大票（海报式） */
+.spots{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.vticket{
+  background:var(--paper);border:1.5px solid var(--ink);display:flex;flex-direction:column;
+  position:relative;transition:transform .25s ease-out,box-shadow .25s ease-out;
+}
+.vticket:hover{transform:translateY(-3px);box-shadow:6px 8px 0 rgba(26,20,16,.14)}
+.vticket .im{aspect-ratio:4/3;background:var(--paper-deep);position:relative}
+.vticket .seal{
+  position:absolute;right:10px;top:10px;font-family:var(--brush);font-size:14px;
+  color:var(--paper);background:var(--cinnabar);padding:4px 9px;border-radius:4px;
+  transform:rotate(4deg);box-shadow:0 2px 8px rgba(26,20,16,.3);
+}
+.vticket .bd{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
+.vticket h3{font-weight:900;font-size:18px}
+.vticket .row{display:flex;gap:8px;font-size:12px;color:var(--muted)}
+.vticket .row b{font-family:var(--latin);font-weight:600;color:var(--ink);flex-shrink:0}
+.vticket p{font-size:12px;color:var(--muted)}
+.vticket .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:10px}
+.vticket .chips span{font-size:11px;border:1px solid var(--ink);padding:2px 10px;border-radius:999px}
+/* 撕口：竖版票底部齿孔 */
+.vticket::after{
+  content:'';position:absolute;left:0;right:0;bottom:44px;height:1.5px;
+  background-image:linear-gradient(90deg,var(--ink) 50%,transparent 50%);
+  background-size:10px 1.5px;background-repeat:repeat-x;
+}
+.vticket .no{
+  padding:12px 18px;font-family:var(--latin);font-size:11px;letter-spacing:.18em;
+  color:var(--muted);display:flex;justify-content:space-between;
+}
+.vticket .no b{color:var(--cinnabar);font-weight:600}
+
+/* 数字体验：墨底票（深色票根，与纸票成对） */
+.digi{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.digi .ticket{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.digi .ticket .stub{color:rgba(242,232,216,.55)}
+.digi .ticket .ds,.digi .ticket .meta{color:rgba(242,232,216,.66)}
+.digi .ticket .meta b{color:var(--gold)}
+.digi .ticket .nm{color:var(--paper)}
+.digi .ticket .im{background:var(--indigo)}
+.digi .ticket .perf{background-image:linear-gradient(180deg,var(--paper) 50%,transparent 50%)}
+
+/* ── 移动端 ─────────────────────────────────────────────── */
+@media (max-width:720px){
+  .poster{grid-template-columns:1fr;min-height:0}
+  .poster h1{font-size:36px}
+  .poster .txt{padding:30px 24px 36px}
+  .poster .txt::after{font-size:13px;right:-74px;top:26px;padding:6px 66px}
+  .poster .pic{min-height:220px}
+  .gate button{padding:10px 18px 10px 34px;font-size:13px}
+  .tickets,.digi,.spots{grid-template-columns:1fr}
+  .ticket.mega{grid-column:auto}
+  .ticket{grid-template-columns:128px 1fr 2px 46px}
+  .ticket .stub{font-size:9px;letter-spacing:.1em}
+  .ticket.mega{grid-template-columns:1fr}
+  .ticket.mega .im{min-height:180px}
+  .ticket.mega .perf{display:none}
+  .ticket.mega .stub{
+    writing-mode:horizontal-tb;flex-direction:row;justify-content:flex-start;gap:14px;
+    padding:8px 18px;border-top:1.5px dashed var(--ink);
+  }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand-seal">川剧</div>
+  <div class="t">四川省川剧院</div>
+  <span class="no">NO. SC-2026 · WENCHUANG</span>
+</header>
+<div class="preview-note">REDESIGN PREVIEW v3「票根」— 原版页面未做任何改动 · 本页为静态方案稿</div>
+
+<!-- 海报首屏：日场大戏海报 -->
+<section class="poster">
+  <div class="txt">
+    <div>
+      <div class="eyebrow">WEN &amp; CHUANG · 文创雅集</div>
+      <h1>把一台戏<br><em>折进</em>口袋里</h1>
+      <p>脸谱、折扇、盖碗茶、蜀绣——散场的观众带不走唱词，但带得走这些。</p>
+      <a class="cta" href="javascript:void(0)">持票入场 →</a>
+    </div>
+    <div style="font-family:var(--latin);font-size:11px;letter-spacing:.2em;color:rgba(242,232,216,.5)">
+      2026.08.31 · 四川省川剧院 · 文创部
+    </div>
+  </div>
+  <div class="pic">
+    <img src="../assets/mask-red-ai.jpg" alt="川剧脸谱">
+    <div class="stub">存根 <b>No.0087</b> 副券</div>
+  </div>
+</section>
+
+<!-- 检票口导航 -->
+<nav class="gate" id="gate">
+  <button class="on" data-p="p-guan">观演延伸<span class="en">TAKEHOME</span></button>
+  <button data-p="p-shuzi">数字体验<span class="en">DIGITAL</span></button>
+  <button data-p="p-gong">共创参与<span class="en">CO-CREATE</span></button>
+  <button data-p="p-sheng">文化生活<span class="en">LIFE</span></button>
+</nav>
+
+<main class="stage">
+
+  <!-- 观演延伸：购物点竖票 + 商城横票 -->
+  <section class="panel on" id="p-guan">
+    <div class="sec-head"><h2>观演延伸</h2><span class="rule"></span><span class="sub">看戏之外，把川剧带在身上</span></div>
+    <div class="spots">
+      <div class="vticket">
+        <div class="im"><img src="../assets/products/furong_mask_pendant.jpg" alt="文创商店"><span class="seal">大堂</span></div>
+        <div class="bd">
+          <h3>文创商店</h3>
+          <div class="row"><b>營業</b>演出日 18:00–22:00</div>
+          <div class="row"><b>位置</b>一层大堂东侧</div>
+          <p>脸谱挂坠、折扇、蜀绣伴手礼，散场顺路即取。</p>
+          <div class="chips"><span>脸谱周边</span><span>蜀绣</span><span>伴手礼</span></div>
+        </div>
+        <div class="no"><span>SHOP · 001</span><b>检讫</b></div>
+      </div>
+      <div class="vticket">
+        <div class="im"><img src="../assets/products/furong_gaiwan_teaset.jpg" alt="盖碗茶铺"><span class="seal">茶房</span></div>
+        <div class="bd">
+          <h3>盖碗茶铺</h3>
+          <div class="row"><b>營業</b>每日 14:00–21:30</div>
+          <div class="row"><b>位置</b>中庭回廊</div>
+          <p>开锣前一盏三花，配一碟戏点，戏里戏外都是成都。</p>
+          <div class="chips"><span>盖碗茶</span><span>茶点</span></div>
+        </div>
+        <div class="no"><span>SHOP · 002</span><b>检讫</b></div>
+      </div>
+      <div class="vticket">
+        <div class="im"><img src="../assets/products/furong_opera_pottery.jpg" alt="戏文书肆"><span class="seal">書肆</span></div>
+        <div class="bd">
+          <h3>戏文書肆</h3>
+          <div class="row"><b>營業</b>周末 10:00–20:00</div>
+          <div class="row"><b>位置</b>二层环廊</div>
+          <p>绝版唱本、手抄戏折与院藏出版物，懂行人的书架。</p>
+          <div class="chips"><span>唱本</span><span>戏折</span></div>
+        </div>
+        <div class="no"><span>SHOP · 003</span><b>检讫</b></div>
+      </div>
+    </div>
+
+    <div class="sec-head" style="margin-top:34px"><h2>文创商城</h2><span class="rule"></span><span class="sub">今日在售</span></div>
+    <div class="tickets">
+      <div class="ticket mega">
+        <div class="im"><img src="../assets/products/furong_wusheng_sword.jpg" alt="芙蓉武生剑"></div>
+        <div class="bd">
+          <div class="nm">芙蓉武生剑 · 摆件</div>
+          <div class="ds">按院内武生佩剑 1:2 复刻，剑穗为戏装同源织带。限量编号发售，附院藏证书。</div>
+          <button class="buy">加入购物袋</button>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0188</span><span class="pr">¥299</span><span class="mini">藏</span></div>
+      </div>
+      <div class="ticket">
+        <div class="im"><img src="../assets/products/furong_bamboo_fan.jpg" alt="竹折扇"></div>
+        <div class="bd">
+          <div class="nm">戏腔竹折扇</div>
+          <div class="ds">扇面手绘脸谱，开合有响。</div>
+          <div class="meta"><b>¥69</b><span>库存 32</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0121</span><span class="mini">售</span></div>
+      </div>
+      <div class="ticket">
+        <div class="im"><img src="../assets/products/mask_blue_tiger.jpg" alt="蓝虎脸谱"></div>
+        <div class="bd">
+          <div class="nm">蓝虎脸谱 · 壁挂</div>
+          <div class="ds">手工彩绘，每脸皆孤品。</div>
+          <div class="meta"><b>¥158</b><span>听典故 ♪</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0142</span><span class="mini">售</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数字体验：墨底票 -->
+  <section class="panel" id="p-shuzi">
+    <div class="sec-head"><h2>数字体验</h2><span class="rule"></span><span class="sub">新技术，老味道</span></div>
+    <div class="digi">
+      <div class="ticket">
+        <div class="im"><img src="../assets/mask-gold-ai.jpg" alt="知识图谱"></div>
+        <div class="bd">
+          <div class="nm">川剧知识图谱</div>
+          <div class="ds">22 个节点串起声腔、行当与名家，像翻一张会长的关系网。</div>
+          <div class="meta"><b>FREE</b><span>互动 · 图谱</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0022</span><span class="mini">覽</span></div>
+      </div>
+      <div class="ticket">
+        <div class="im"><img src="../assets/mask-blue-ai.jpg" alt="VR 展馆"></div>
+        <div class="bd">
+          <div class="nm">VR 全景展馆</div>
+          <div class="ds">走进后台衣箱与万年台的全景世界，不出戏园子。</div>
+          <div class="meta"><b>FREE</b><span>沉浸 · 全景</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0031</span><span class="mini">覽</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 共创参与 -->
+  <section class="panel" id="p-gong">
+    <div class="sec-head"><h2>共创参与</h2><span class="rule"></span><span class="sub">这座戏台，也留给新人</span></div>
+    <div class="tickets">
+      <div class="ticket mega">
+        <div class="im"><img src="../assets/products/mask_gold_dragon.jpg" alt="IP 铸造"></div>
+        <div class="bd">
+          <div class="nm">IP 铸造 · 金龙脸谱</div>
+          <div class="ds">把你的设计铸成链上数字藏品，版权与分成皆可追溯。</div>
+          <button class="buy">去铸造</button>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0007</span><span class="pr">0.06 ETH</span><span class="mini">創</span></div>
+      </div>
+      <div class="ticket">
+        <div class="im"><img src="../assets/products/furong_embroidery_frame.jpg" alt="众创平台"></div>
+        <div class="bd">
+          <div class="nm">众创平台</div>
+          <div class="ds">任务广场 · 智库 · 创意工坊。</div>
+          <div class="meta"><b>入驻</b><span>创作者 214 人</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0101</span><span class="mini">創</span></div>
+      </div>
+      <div class="ticket">
+        <div class="im"><img src="../assets/products/furong_shushi_tapestry.jpg" alt="IP 资产库"></div>
+        <div class="bd">
+          <div class="nm">IP 资产库</div>
+          <div class="ds">11 件非遗数字资产，凭授权取用。</div>
+          <div class="meta"><b>授权</b><span>官方备案</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0112</span><span class="mini">藏</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 文化生活 -->
+  <section class="panel" id="p-sheng">
+    <div class="sec-head"><h2>文化生活</h2><span class="rule"></span><span class="sub">戏外之事，皆是文章</span></div>
+    <div class="tickets">
+      <div class="ticket">
+        <div class="im"><img src="../assets/products/furong_saffron_box.jpg" alt="川剧生活"></div>
+        <div class="bd">
+          <div class="nm">川剧生活</div>
+          <div class="ds">盖碗茶、戏台边、慢半拍的成都节奏。</div>
+          <div class="meta"><b>体验</b><span>每日开锣前</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0201</span><span class="mini">活</span></div>
+      </div>
+      <div class="ticket">
+        <div class="im"><img src="../assets/products/furong_embroidery_frame.jpg" alt="川剧世界"></div>
+        <div class="bd">
+          <div class="nm">川剧世界</div>
+          <div class="ds">30+ 巡演国家 · 120+ 场海外专场。</div>
+          <div class="meta"><b>巡演</b><span>世界地图点亮中</span></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub"><span>NO.0202</span><span class="mini">世</span></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* 预览页交互：检票口切换（正式实现并入 switchWenchuangSubView 白名单体系） */
+var btns=document.querySelectorAll('#gate button');
+btns.forEach(function(b){
+  b.addEventListener('click',function(){
+    btns.forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on');
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on')});
+    document.getElementById(b.dataset.p).classList.add('on');
+  });
+});
+</script>
+</body>
+</html>

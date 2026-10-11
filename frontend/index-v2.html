@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四川省川剧院 · 夜刊 NO.01（新风格概念版）</title>
+<link href="./assets/fonts/fonts.css" rel="stylesheet">
+<style>
+/* ============================================================
+   夜刊 · 剧场编辑风（Design KB 对齐版）
+   KB §2.1 字号阶梯：16 基准 ×1.25 → 16/20/25/31/39/49/62
+   KB §2.5 间距：8pt 倍数（8/16/24/32/48/64/96）
+   KB §2.9 色彩 60-30-10：暖黑底 60 / 米白文字 30 / 朱红点睛 10
+   KB §4.中式：留白≥50% / 印章 1 处 / 金线细如发丝 / 书法只做大字
+   ============================================================ */
+:root{
+  --ink:#16120E;          /* 暖黑底（禁纯黑） */
+  --ink-2:#1E1813;        /* 面层 */
+  --ink-3:#262019;        /* 卡层 */
+  --paper:#F3EBDD;        /* 米白 */
+  --paper-dim:rgba(243,235,221,.62);
+  --paper-faint:rgba(243,235,221,.38);
+  --gold:#C9A25E;         /* 描金 */
+  --gold-hair:rgba(201,162,94,.34);
+  --red:#C43C31;          /* 朱红（唯一强调） */
+  --hair:1px solid var(--gold-hair);
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:48px; --s6:64px; --s8:96px;
+  --serif:'Noto Serif SC',serif;
+  --calli:'Ma Shan Zheng',serif;
+  --sans:'Outfit','PingFang SC','Microsoft YaHei',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);color:var(--paper);font-family:var(--sans);
+  font-size:16px;line-height:1.7;min-height:100vh;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+/* 噪点去塑料感 4%（KB §4 渐变光效） */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");}
+::selection{background:var(--red);color:var(--paper)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+
+/* ── 刊头 ── */
+.mast{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  padding:var(--s2) var(--s5);background:rgba(22,18,14,.82);backdrop-filter:blur(10px);
+  border-bottom:var(--hair)}
+.mast .brand{display:flex;align-items:center;gap:var(--s2)}
+.seal{width:40px;height:40px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,#D24538,#8E1D18);color:#F7EEE0;font-family:var(--calli);font-size:20px;
+  transform:rotate(-4deg);box-shadow:0 3px 12px rgba(0,0,0,.45)}
+.mast .name{font-family:var(--serif);font-weight:900;letter-spacing:.28em;font-size:15px}
+.mast .no{font-size:11px;letter-spacing:.32em;color:var(--paper-faint);text-transform:uppercase}
+.mast nav{display:flex;gap:var(--s3)}
+.mast nav a{font-size:13px;letter-spacing:.18em;color:var(--paper-dim);padding:6px 2px;
+  border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
+.mast nav a:hover{color:var(--paper);border-color:var(--gold)}
+@media(max-width:760px){.mast{padding:var(--s2)}.mast .no{display:none}.mast nav{gap:var(--s2)}}
+@media(max-width:520px){
+  .mast{padding:10px 12px}
+  .mast .name{font-size:12px;letter-spacing:.1em;white-space:nowrap}
+  .mast nav{gap:12px}
+  .mast nav a{font-size:12px;letter-spacing:.08em}
+  .sec{padding:var(--s5) var(--s3)}
+  .hero h1{font-size:34px}
+}
+
+/* ── Hero（编辑风大字 + 脸谱主体，留白过半） ── */
+.hero{position:relative;max-width:1200px;margin:0 auto;padding:var(--s8) var(--s5) var(--s6);
+  display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:var(--s6);align-items:center;min-height:78vh}
+.hero .kicker{display:flex;align-items:center;gap:var(--s2);font-size:12px;letter-spacing:.34em;
+  color:var(--paper-dim);margin-bottom:var(--s4)}
+.hero .kicker::before{content:'';width:32px;height:1px;background:var(--gold)}
+.hero h1{font-family:var(--serif);font-weight:900;font-size:62px;line-height:1.14;letter-spacing:.02em}
+.hero .rule{width:72px;height:2px;background:var(--gold);margin:var(--s4) 0}
+.hero .duilian{font-family:var(--calli);font-size:39px;line-height:1.5;letter-spacing:.06em}
+.hero .duilian em{font-style:normal;color:var(--red)}
+.hero .sub{margin-top:var(--s4);max-width:36em;font-size:16px;color:var(--paper-dim)}
+.hero .cta{display:inline-flex;align-items:center;gap:10px;margin-top:var(--s5);
+  padding:14px 30px;border-radius:2px;border:1px solid var(--gold-hair);
+  color:var(--paper);font-size:14px;letter-spacing:.22em;cursor:pointer;
+  transition:border-color .2s,background .2s}
+.hero .cta:hover{border-color:var(--gold);background:rgba(201,162,94,.08)}
+.hero .cta b{color:var(--gold);font-weight:600}
+/* 追光（单点） */
+.hero::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(52% 68% at 74% 30%,rgba(201,162,94,.10),transparent 62%)}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding:var(--s5) var(--s3);min-height:auto}
+  .hero h1{font-size:39px}
+  .hero .duilian{font-size:25px}
+}
+
+/* ── 章节骨架：编号 + 细线 + 大字标题 ── */
+.sec{max-width:1200px;margin:0 auto;padding:var(--s8) var(--s5)}
+.sec+.sec{border-top:var(--hair)}
+.sec-head{display:flex;align-items:baseline;gap:var(--s3);margin-bottom:var(--s5)}
+.sec-head .no{font-size:13px;letter-spacing:.3em;color:var(--gold)}
+.sec-head h2{font-family:var(--serif);font-weight:900;font-size:31px;letter-spacing:.04em}
+.sec-head .en{margin-left:auto;font-size:11px;letter-spacing:.3em;color:var(--paper-faint);text-transform:uppercase}
+.sec-sub{max-width:66ch;color:var(--paper-dim);font-size:14px;margin:calc(-1*var(--s3)) 0 var(--s5) 0}
+
+/* ── 01 今晚节目：时间轴行（非卡片堆叠） ── */
+.bill{border-top:var(--hair)}
+.bill-row{display:grid;grid-template-columns:110px 1fr auto;gap:var(--s3);align-items:center;
+  padding:var(--s3) var(--s2);border-bottom:var(--hair);transition:background .2s}
+.bill-row:hover{background:rgba(201,162,94,.05)}
+.bill-row .tm{font-variant-numeric:tabular-nums;font-size:14px;letter-spacing:.12em;color:var(--paper-dim)}
+.bill-row .nm{font-family:var(--serif);font-weight:700;font-size:20px}
+.bill-row .ds{font-size:13px;color:var(--paper-faint);margin-top:2px}
+.bill-row .tag{font-size:11px;letter-spacing:.22em;padding:5px 12px;border-radius:2px;white-space:nowrap}
+.bill-row .tag.live{color:#F3EBDD;background:var(--red)}
+.bill-row .tag.act{color:var(--gold);border:1px solid var(--gold-hair)}
+.bill-row.on{background:rgba(201,162,94,.07);border-left:2px solid var(--red)}
+@media(max-width:760px){.bill-row{grid-template-columns:1fr auto}.bill-row .tm{grid-column:1/-1}}
+
+/* ── 02 同传现场：字幕样张 ── */
+.cap-card{max-width:720px;margin:0 auto;border:var(--hair);border-radius:4px;
+  background:rgba(0,0,0,.35);padding:var(--s4)}
+.cap-card .zh{font-family:var(--serif);font-size:20px;line-height:1.9;color:var(--paper)}
+.cap-card .en{font-size:14px;line-height:1.8;color:var(--paper-faint);margin-top:var(--s2)}
+.cap-card .meta{display:flex;justify-content:space-between;margin-top:var(--s3);
+  font-size:11px;letter-spacing:.2em;color:var(--gold)}
+.walk{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3);margin-top:var(--s4)}
+.walk figure{border:var(--hair);border-radius:4px;overflow:hidden;background:var(--ink-2)}
+.walk img{width:100%;aspect-ratio:4/3;object-fit:cover;transition:transform .3s ease;display:block}
+.walk figure:hover img{transform:scale(1.03)}
+.walk figcaption{padding:var(--s2)}
+.walk .wn{font-family:var(--serif);font-weight:700;font-size:16px}
+.walk .wd{font-size:12px;color:var(--paper-faint);margin-top:2px}
+@media(max-width:760px){.walk{grid-template-columns:1fr}}
+
+/* ── 通用按钮（每屏一个主 CTA） ── */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 28px;border-radius:2px;
+  border:1px solid var(--gold-hair);background:transparent;color:var(--paper);
+  font-size:14px;letter-spacing:.18em;cursor:pointer;transition:all .2s}
+.btn:hover{border-color:var(--gold);background:rgba(201,162,94,.08)}
+.btn.primary{background:var(--red);border-color:var(--red)}
+.btn.primary:hover{filter:brightness(1.12)}
+
+/* ── 页脚 ── */
+footer{border-top:var(--hair);margin-top:var(--s8)}
+footer .in{max-width:1200px;margin:0 auto;padding:var(--s5);display:flex;align-items:center;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+footer .fin{font-family:var(--calli);font-size:25px;letter-spacing:.2em}
+footer small{font-size:11px;letter-spacing:.24em;color:var(--paper-faint)}
+
+/* ── 滚动显现（respect reduced-motion） ── */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none;transition:none}
+  .reveal img,.walk img{transition:none}
+}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="brand">
+    <div class="seal">川</div>
+    <div>
+      <div class="name">四川省川剧院</div>
+      <div class="no">SICHUAN OPERA THEATRE · 夜刊 NO.01</div>
+    </div>
+  </div>
+  <nav>
+    <a href="#tonight">节目</a>
+    <a href="#live">同传</a>
+    <a href="#play">玩法</a>
+    <a href="#walk">散场</a>
+  </nav>
+</header>
+
+<main>
+  <!-- KB §4：留白过半 / 印章 1 处 / 书法只做大字 -->
+  <section class="hero">
+    <div>
+      <div class="kicker">国家级非物质文化遗产 · 百年川剧传承</div>
+      <h1>四川省川剧院</h1>
+      <div class="rule"></div>
+      <div class="duilian"><em>芙蓉国粹</em> · 蜀戏冠天下</div>
+      <p class="sub">一副耳机，听懂一整晚的川剧。现场原声、多语言同传字幕、
+        绝技看点与散场记忆——从开场锣鼓到谢幕，都在这一页。</p>
+      <a class="cta" href="#live">进入<b>收听席</b></a>
+    </div>
+  </section>
+
+  <!-- 01 今晚节目 -->
+  <section class="sec" id="tonight">
+    <div class="sec-head reveal">
+      <span class="no">01</span>
+      <h2>今晚节目</h2>
+      <span class="en">TONIGHT</span>
+    </div>
+    <p class="sec-sub reveal">约 90 分钟 · 中场休息 15 分钟 · 提前 30 分钟凭票取票，迟到观众于幕间入场。</p>
+    <div class="bill reveal">
+      <div class="bill-row">
+        <span class="tm">19:30 – 19:45</span>
+        <div><div class="nm">茶楼暖场 · 盖碗茶与打趣</div><div class="ds">老成都盖碗茶迎宾，皮金打趣拉开戏楼热场序幕</div></div>
+        <span class="tag act">候场</span>
+      </div>
+      <div class="bill-row on">
+        <span class="tm">19:45 – 20:05</span>
+        <div><div class="nm">五行当合演 · 昆高胡弹灯</div><div class="ds">生旦净末丑五行当齐登台，演绎川剧五大声腔奇韵</div></div>
+        <span class="tag live">上演中</span>
+      </div>
+      <div class="bill-row">
+        <span class="tm">20:05 – 20:30</span>
+        <div><div class="nm">第一篇章《三国风云》</div><div class="ds">关羽张飞武生拔剑雷震，精彩绝伦的川剧抢牌武打</div></div>
+        <span class="tag act">第一篇章</span>
+      </div>
+      <div class="bill-row">
+        <span class="tm">21:15 – 21:45</span>
+        <div><div class="nm">压轴绝技 · 变脸吐火与滚灯</div><div class="ds">大师吐火瞬间与《皮金滚灯》说唱打趣压轴高潮</div></div>
+        <span class="tag act">压轴绝技</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 同传现场 -->
+  <section class="sec" id="live">
+    <div class="sec-head reveal">
+      <span class="no">02</span>
+      <h2>同传现场</h2>
+      <span class="en">LIVE CAPTIONS</span>
+    </div>
+    <p class="sec-sub reveal">进入收听席，原声与所选语言的字幕逐句同步推送——不懂中文，也能看懂整晚的川剧。</p>
+    <div class="cap-card reveal">
+      <div class="zh">“来来来嘛，各位老板，各位孃孃，各位帅哥美女，往里坐。我们这个茶楼有三热：茶热，锣鼓热，老板娘脾气热。前两个可以续，最后一个最好要点。坐近点，坐近点。”</div>
+      <div class="en">“Come on in, everyone—bosses, ladies, gentlemen—have a seat inside. Our teahouse is famous for three things that are hot: the tea, the gongs and drums, and the proprietress's temper.”</div>
+      <div class="meta"><span>《皮金滚灯》· 实时双语字幕</span><span>延迟 &lt; 30ms</span></div>
+    </div>
+    <div style="margin-top:var(--s4)">
+      <a class="btn primary" href="./index.html?demo=1&view=livelisten">进入收听席</a>
+    </div>
+  </section>
+
+  <!-- 03 玩法三则 -->
+  <section class="sec" id="play">
+    <div class="sec-head reveal">
+      <span class="no">03</span>
+      <h2>玩法三则</h2>
+      <span class="en">PLAY</span>
+    </div>
+    <p class="sec-sub reveal">候场与中场的小小消遣：集齐印章、答对竞答、练出火眼金睛——礼遇都在散场等你。</p>
+    <div class="bill reveal">
+      <div class="bill-row">
+        <span class="tm">🪪 护照</span>
+        <div><div class="nm">川剧护照 · 集章</div><div class="ds">连耳机、听介绍、进收听席……每一步都是一枚印章</div></div>
+        <a class="tag act" href="./index.html?demo=1&view=profile">查看印章墙 →</a>
+      </div>
+      <div class="bill-row">
+        <span class="tm">🏆 竞答</span>
+        <div><div class="nm">观演小试 · 五题速答</div><div class="ds">通关解锁「懂戏之人」印章与文创九折邀请码</div></div>
+        <a class="tag act" href="./index.html?demo=1&view=spectate">开始挑战 →</a>
+      </div>
+      <div class="bill-row">
+        <span class="tm">🎭 眼力</span>
+        <div><div class="nm">变脸挑战 · 极限眼力</div><div class="ds">脸谱快变三关，过两关解锁「火眼金睛」邀请码</div></div>
+        <a class="tag act" href="./index.html?demo=1&view=spectate">接受挑战 →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 散场去哪 -->
+  <section class="sec" id="walk">
+    <div class="sec-head reveal">
+      <span class="no">04</span>
+      <h2>散场去哪</h2>
+      <span class="en">AFTER THE SHOW</span>
+    </div>
+    <p class="sec-sub reveal">凭竞答九折码，这些地方都认。剧院内外，步行可达。</p>
+    <div class="walk reveal">
+      <figure>
+        <img src="./assets/products/furong_mask_pendant.jpg" alt="脸谱挂件">
+        <figcaption><div class="wn">剧院文创商店</div><div class="wd">一层大堂东侧 · 竞答九折码适用</div></figcaption>
+      </figure>
+      <figure>
+        <img src="./assets/products/furong_gaiwan_teaset.jpg" alt="盖碗茶">
+        <figcaption><div class="wn">鹤鸣茶社</div><div class="wd">人民公园内 · 步行 8 分钟</div></figcaption>
+      </figure>
+      <figure>
+        <img src="./assets/products/mask_gold_dragon.jpg" alt="金脸龙王">
+        <figcaption><div class="wn">宽窄巷子脸谱铺</div><div class="wd">宽窄巷子 · 步行 12 分钟</div></figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="in">
+    <div class="fin">好戏散场 · 记忆登台</div>
+    <small>四川省川剧院 · 百年川剧戏楼 · AI 同传伴你入戏</small>
+  </div>
+</footer>
+
+<script>
+/* 滚动显现 */
+(function(){
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+})();
+</script>
+</body>
+</html>

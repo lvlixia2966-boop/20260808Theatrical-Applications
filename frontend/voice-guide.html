@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>川蜀大剧院 · 语音导览</title>
+<style>
+  :root{
+    --bg:#0F0A07;
+    --bg-card:rgba(255,249,242,0.06);
+    --bg-card-hover:rgba(255,249,242,0.1);
+    --fg:#F5EDE0;
+    --fg-muted:rgba(245,237,224,0.5);
+    --primary:#C73E3A;
+    --primary-hover:#8B1A1A;
+    --primary-fg:#F5EDE0;
+    --accent:#E0A83E;
+    --accent-light:#F5C557;
+    --border:rgba(245,237,224,0.12);
+    --border-active:rgba(199,62,58,0.4);
+    --ok:#6DB487;
+    --warn:#E0A83E;
+    --err:#C73E3A;
+    --shadow:0 4px 20px rgba(0,0,0,0.3);
+    --on-dark:#F5EDE0;
+    --on-dark-muted:rgba(245,237,224,0.5);
+    --muted:rgba(245,237,224,0.5);
+    --card:#F5EDE0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;padding-bottom:24px}
+  .wrap{max-width:640px;margin:0 auto;padding:16px;position:relative;z-index:1}
+  .hidden{display:none!important}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(245,237,224,.15);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(245,237,224,.25)}
+
+  /* 卡片 */
+  .card{background:var(--bg-card);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;transition:box-shadow .2s,border-color .2s}
+  .card:hover{box-shadow:var(--shadow)}
+
+  /* 顶部 */
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;gap:8px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .seal{width:40px;height:40px;background:linear-gradient(135deg,var(--primary),var(--primary-hover));color:var(--primary-fg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;transform:rotate(-3deg);box-shadow:0 2px 12px rgba(199,62,58,.3)}
+  .brand h1{font-size:18px;color:var(--fg);letter-spacing:1px;white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+  .head-right{display:flex;align-items:center;gap:10px}
+  .conn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-muted);white-space:nowrap}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(245,237,224,.3);transition:all .2s}
+  .dot.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(109,180,135,.2)}
+  .dot.err{background:var(--err)}
+  .lang-btn{border:1px solid var(--border);background:var(--bg-card);color:var(--fg);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .15s}
+  .lang-btn:hover{background:var(--bg-card-hover);border-color:var(--accent)}
+
+  /* 步骤状态条 */
+  .steps{display:flex;gap:4px;margin-bottom:20px;background:var(--bg-card);border-radius:12px;padding:4px;border:1px solid var(--border)}
+  .steps .step{flex:1;text-align:center;font-size:12px;color:var(--fg-muted);padding:10px 4px;border-bottom:2px solid transparent;transition:all .2s;border-radius:8px}
+  .steps .step.clickable{cursor:pointer}
+  .steps .step.clickable:active{opacity:.6}
+  .steps .step.clickable:hover{color:var(--fg)}
+  .steps .step.active{color:var(--accent-light);border-bottom-color:var(--accent);font-weight:600}
+  .steps .step.done{color:var(--ok);border-bottom-color:var(--ok)}
+
+  /* 提示文字 */
+  .hint{font-size:13px;color:var(--fg-muted);line-height:1.7;margin-bottom:14px}
+
+  /* 按钮 */
+  .btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;background:var(--primary);color:var(--primary-fg);transition:all .15s}
+  .btn:hover:not(:disabled){background:var(--primary-hover);box-shadow:0 4px 20px rgba(199,62,58,.3)}
+  .btn:active:not(:disabled){transform:scale(.98)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+  .btn.ghost:hover:not(:disabled){background:rgba(199,62,58,.1)}
+  .btn.small{width:auto;padding:8px 14px;font-size:13px;display:inline-flex;border-radius:10px}
+  .btn-row{display:flex;gap:10px;margin-top:12px}
+  .btn-row .btn{flex:1}
+
+  /* 蓝牙连接区 - 大按钮脉冲动画 */
+  #btn-connect:not(:disabled){animation:pulse-glow 2s ease-in-out infinite}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(199,62,58,.4)}50%{box-shadow:0 0 0 12px rgba(199,62,58,0)}}
+
+  /* 耳机信息卡 */
+  .echo{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px}
+  .echo .ico{width:44px;height:44px;border-radius:50%;background:rgba(199,62,58,.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .echo .info{font-size:13px}
+  .echo .info b{display:block;font-size:15px;color:var(--fg)}
+  .echo .info small{color:var(--fg-muted)}
+
+  /* 状态消息 */
+  .status-msg{font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:12px;line-height:1.6}
+  .status-msg.err{background:rgba(199,62,58,.15);color:#F5A5A0;border:1px solid rgba(199,62,58,.3)}
+  .status-msg.ok{background:rgba(109,180,135,.12);color:#A5D4B8;border:1px solid rgba(109,180,135,.25)}
+  .status-msg.warn{background:rgba(224,168,62,.12);color:var(--accent-light);border:1px solid rgba(224,168,62,.25)}
+
+  /* 区块标题 */
+  .sec-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .sec-title h2{font-size:17px;color:var(--fg)}
+  .sec-title span{font-size:12px;color:var(--fg-muted)}
+
+  /* 筛选条 */
+  .filter{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+  .chip{padding:7px 14px;border-radius:20px;font-size:12px;border:1px solid var(--border);background:var(--bg-card);color:var(--fg-muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+  .chip:hover{background:var(--bg-card-hover);color:var(--fg)}
+  .chip.active{background:var(--accent);color:#0F0A07;border-color:var(--accent);font-weight:600}
+
+  /* 语音播报设置面板 */
+  .voice-panel .vp-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--fg)}
+  .vp-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .vp-row>label{flex-shrink:0;width:72px;font-size:13px;color:var(--fg-muted)}
+  .vp-row select{flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg-card);color:var(--fg)}
+  .vp-row select:focus{outline:none;border-color:var(--primary)}
+  .vp-modes{flex:1;display:flex;gap:14px;flex-wrap:wrap}
+  .vp-modes label{font-size:13px;display:flex;align-items:center;gap:5px;color:var(--fg);cursor:pointer}
+  .vp-modes input{accent-color:var(--primary)}
+  .vp-status{font-size:12px;color:var(--fg-muted);margin-top:8px;min-height:16px}
+  .vp-status.playing{color:var(--accent-light)}
+  .prog .play-btn{min-width:96px}
+
+  /* select option 暗色适配 */
+  select option{background:#1A1410;color:var(--fg)}
+  input::placeholder{color:var(--fg-muted)}
+
+  /* 节目列表 */
+  .prog{background:var(--bg-card);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;transition:box-shadow .2s,border-color .2s}
+  .prog:hover{box-shadow:0 4px 20px rgba(0,0,0,.3);border-color:var(--border-active)}
+  .prog-head{display:flex;gap:12px;padding:16px;cursor:pointer;transition:background .15s}
+  .prog-head:active{background:rgba(199,62,58,.06)}
+  .prog .p-time{flex-shrink:0;text-align:center;width:56px}
+  .prog .p-time .t{font-size:20px;font-weight:700;color:var(--accent)}
+  .prog .p-time .s{font-size:11px;color:var(--fg-muted)}
+  .prog .p-body{flex:1;min-width:0}
+  .prog .p-body h3{font-size:15px;margin-bottom:4px;color:var(--fg)}
+  .prog .p-body .p-intro{font-size:12px;line-height:1.6;color:var(--fg-muted);margin-bottom:6px}
+  .prog .p-body .meta{font-size:12px;color:var(--fg-muted);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .prog .p-body .price{font-size:14px;color:var(--primary);font-weight:600}
+  .prog .p-body .price small{font-weight:400;color:var(--fg-muted);font-size:11px}
+  .prog-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .chev{color:var(--fg-muted);font-size:12px;transition:transform .2s;margin-left:auto;align-self:center}
+  .prog.expanded .chev{transform:rotate(180deg)}
+  .prog-content{display:none;padding:0 16px 16px;border-top:1px dashed var(--border)}
+  .prog.expanded .prog-content{display:block}
+  .content-block{background:rgba(255,249,242,.04);border:1px solid var(--border);border-radius:8px;padding:12px;margin:12px 0;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--fg)}
+  .content-block .cb-label{display:block;font-size:11px;color:var(--fg-muted);margin-bottom:6px;font-weight:600}
+  .content-block.empty{color:var(--fg-muted);text-align:center}
+  .tag{display:inline-block;padding:1px 8px;border-radius:8px;font-size:11px;background:rgba(199,62,58,.15);color:#F5A5A0;margin-left:6px}
+  .tag.voice{background:rgba(224,168,62,.15);color:var(--accent-light)}
+  .tag.text{background:rgba(109,180,135,.12);color:#A5D4B8}
+
+  /* 空状态 */
+  .empty{text-align:center;color:var(--fg-muted);padding:30px 0;font-size:14px}
+
+  /* 朗读高亮 */
+  .speaking{color:var(--primary)!important}
+
+  /* 预约成功卡片 */
+  .success{border:1px solid var(--ok);background:rgba(109,180,135,.08)}
+  .success h3{color:var(--ok);margin-bottom:10px}
+  .success .prog-content{display:block;border-top:none}
+
+  /* 弹层 */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;z-index:100}
+  .sheet{background:#1A1410;width:100%;border-radius:20px 20px 0 0;padding:20px;max-height:88vh;overflow:auto;border:1px solid var(--border);border-bottom:none}
+  .sheet h3{margin-bottom:12px;font-size:17px;color:var(--fg)}
+  .sheet label{display:block;font-size:13px;color:var(--fg-muted);margin:12px 0 4px}
+  .sheet input,.sheet select,.sheet textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--bg-card);color:var(--fg)}
+  .sheet input:focus,.sheet select:focus,.sheet textarea:focus{outline:none;border-color:var(--primary)}
+  .sheet textarea{min-height:64px;resize:vertical}
+  .grip{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px}
+  .sheet-foot{display:flex;gap:10px;margin-top:16px}
+  .sheet-foot .btn{flex:1}
+
+  /* Toast */
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(26,20,16,.95);color:var(--fg);padding:12px 20px;border-radius:10px;font-size:14px;z-index:200;opacity:0;transition:.3s;max-width:90vw;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow)}
+  .toast.show{opacity:1}
+
+  /* 语言选择弹层 */
+  .lang-overlay{align-items:center!important;background:rgba(0,0,0,.7)!important;z-index:120}
+  .lang-sheet{border-radius:20px!important;max-height:80vh;display:flex;flex-direction:column;position:relative;max-width:480px}
+  .lang-sheet .lang-close{position:absolute;top:10px;right:14px;z-index:3;width:32px;height:32px;border:none;border-radius:50%;background:var(--bg-card);color:var(--fg-muted);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .lang-sheet .lang-close:hover{background:var(--bg-card-hover);color:var(--primary)}
+  .lang-groups{overflow-y:auto;margin-top:6px}
+  .lang-group-title{font-size:12px;color:var(--fg-muted);font-weight:600;margin:14px 0 8px;letter-spacing:.5px}
+  .lang-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .lang-item{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-card);cursor:pointer;transition:.15s}
+  .lang-item:hover{border-color:var(--primary);background:var(--bg-card-hover)}
+  .lang-item .li-name{font-size:14px;font-weight:600;color:var(--fg)}
+  .lang-item .li-en{font-size:11px;color:var(--fg-muted)}
+  .lang-item .li-flag{font-size:16px}
+  .lang-item.disabled{opacity:.4;cursor:not-allowed}
+  .lang-item.disabled:hover{border-color:var(--border);background:var(--bg-card)}
+  .lang-item .li-soon{font-size:10px;color:var(--fg-muted);background:var(--bg-card);padding:2px 6px;border-radius:8px;white-space:nowrap}
+
+  /* 川剧变脸背景层 */
+  .bg-faces{position:fixed;inset:0;z-index:0;overflow:hidden;background:var(--bg)}
+  .bg-face{position:absolute;right:0;top:50%;width:165vmin;height:165vmin;margin-right:-82.5vmin;margin-top:-82.5vmin;background-size:cover;background-position:center;border-radius:50%;opacity:0;transform:scale(.92) rotate(-12deg);filter:blur(6px) saturate(1.1) brightness(.95);transition:opacity 1s ease,transform 1s ease,filter 1s ease}
+  .bg-face.active{opacity:.5;transform:scale(1) rotate(-12deg);filter:blur(2px) saturate(1.15) brightness(.85)}
+  .bg-face.face-1{background-image:url('assets/mask-red.png?v=8')}
+  .bg-face.face-2{background-image:url('assets/mask-black.png?v=8')}
+  .bg-face.face-3{background-image:url('assets/mask-gold.png?v=8')}
+  .bg-face.face-4{background-image:url('assets/mask-blue.png?v=8')}
+  .bg-face.face-5{background-image:url('assets/mask-green.png?v=8')}
+  .bg-face.face-6{background-image:url('assets/mask-white.png?v=8')}
+  .bg-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,10,7,.7) 0%,rgba(15,10,7,.5) 40%,rgba(15,10,7,.8) 100%)}
+  .bg-flash{position:absolute;inset:0;background:var(--primary);opacity:0;pointer-events:none;z-index:2;mix-blend-mode:overlay}
+  .bg-flash.fire{animation:flash .5s ease-out}
+  @keyframes flash{0%{opacity:0}15%{opacity:.3}100%{opacity:0}}
+</style>
+</head>
+<body>
+<!-- 川剧变脸背景层 -->
+<div class="bg-faces" id="bg-faces">
+  <div class="bg-face face-1 active"></div>
+  <div class="bg-face face-2"></div>
+  <div class="bg-face face-3"></div>
+  <div class="bg-face face-4"></div>
+  <div class="bg-face face-5"></div>
+  <div class="bg-face face-6"></div>
+  <div class="bg-veil"></div>
+  <div class="bg-flash" id="bg-flash"></div>
+</div>
+<!-- 扫码后强制语言选择弹层 -->
+<div class="overlay lang-overlay" id="lang-overlay">
+  <div class="sheet lang-sheet">
+    <button class="lang-close" id="lang-close" onclick="closeLangOverlay()" aria-label="关闭">×</button>
+    <div class="grip"></div>
+    <h3 id="lang-title" data-i18n="langTitle">选择您的语言</h3>
+    <p class="hint" id="lang-sub" data-i18n="langSub">请选择讲解语言，界面与语音将同步适配。</p>
+    <div class="lang-groups" id="lang-groups"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="seal">芙蓉</div>
+      <h1 data-i18n="title">芙蓉国粹 · 蜀戏冠天下</h1>
+    </div>
+    <div class="head-right">
+      <div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-text" data-i18n="conn-off">未连接</span></div>
+      <button class="lang-btn" id="btn-lang" onclick="toggleLang()">EN</button>
+    </div>
+  </header>
+
+  <!-- 步骤状态条（可点击回退） -->
+  <div class="steps">
+    <div class="step clickable active" id="step-1" onclick="goStep(1)" data-i18n="s1">扫码识别</div>
+    <div class="step clickable" id="step-2" onclick="goStep(2)" data-i18n="s2">连接耳机</div>
+    <div class="step clickable" id="step-3" onclick="goStep(3)" data-i18n="s3">选择讲解</div>
+    <div class="step" id="step-4" data-i18n="s4">预约完成</div>
+  </div>
+
+  <!-- 第一步：扫码识别耳机 -->
+  <div id="view-entry">
+    <div class="card">
+      <div class="echo">
+        <div class="ico">🎧</div>
+        <div class="info">
+          <b id="earphone-name" data-i18n="e-loading">耳机识别中...</b>
+          <small id="earphone-qr">二维码：--</small>
+        </div>
+      </div>
+      <div class="status-msg" id="entry-msg"></div>
+      <button class="btn" id="btn-connect" onclick="connectBluetooth()" disabled data-i18n="btn-connect">连接耳机蓝牙</button>
+      <button class="btn ghost" style="margin-top:10px" id="btn-preview" onclick="enterPreview()" data-i18n="btn-preview">试听模式 · 免蓝牙</button>
+      <p class="hint" style="margin-top:12px" data-i18n="entry-hint">请打开手机蓝牙，并佩戴已租借的耳机，点击上方按钮完成连接后即可开始收听讲解。</p>
+    </div>
+  </div>
+
+  <!-- 第二步：节目选择 -->
+  <div id="view-programs" class="hidden">
+    <div class="sec-title">
+      <h2 data-i18n="prog-title">可选讲解</h2>
+      <span id="prog-count"></span>
+    </div>
+    <div class="filter" id="filter-bar"></div>
+    <div class="card voice-panel" id="voice-panel">
+      <div class="vp-title">🎙️ <span data-i18n="voice-panel">语音播报设置</span></div>
+      <div class="vp-row">
+        <label data-i18n="vp-lang">翻译语言</label>
+        <select id="vp-lang"></select>
+      </div>
+      <div class="vp-row">
+        <label data-i18n="vp-voice">音色</label>
+        <select id="vp-voice"></select>
+      </div>
+      <div class="vp-row">
+        <label data-i18n="vp-mode">播报模式</label>
+        <div class="vp-modes">
+          <label><input type="radio" name="vp-mode" value="translate" checked><span data-i18n="mode-translate">纯翻译</span></label>
+          <label><input type="radio" name="vp-mode" value="original"><span data-i18n="mode-original">原声+翻译</span></label>
+        </div>
+      </div>
+      <div class="vp-status" id="vp-status"></div>
+      <div class="btn-row">
+        <button class="btn small ghost" onclick="stopVoice()">⏹ <span data-i18n="stop">停止</span></button>
+      </div>
+    </div>
+    <div id="prog-list"></div>
+    <div class="btn-row">
+      <button class="btn ghost" onclick="disconnect()" data-i18n="btn-reconnect">断开并重新连接</button>
+    </div>
+  </div>
+
+  <!-- 预约弹层 -->
+  <div class="overlay hidden" id="res-overlay">
+    <div class="sheet">
+      <div class="grip"></div>
+      <h3 id="res-title">预约讲解</h3>
+      <div class="content-block" id="res-preview" style="margin-top:8px"></div>
+      <label data-i18n="res-type">预约类型</label>
+      <select id="res-type" onchange="renderResPreview()">
+        <option value="full" data-i18n="opt-full">文本 + 语音</option>
+        <option value="voice" data-i18n="opt-voice">仅语音</option>
+        <option value="text" data-i18n="opt-text">仅文本</option>
+      </select>
+      <label data-i18n="res-name">您的称呼</label>
+      <input id="res-name" data-i18n-ph="res-name-ph" placeholder="请输入称呼（选填）">
+      <label data-i18n="res-contact">联系方式</label>
+      <input id="res-contact" data-i18n-ph="res-contact-ph" placeholder="手机号/微信号（选填）">
+      <div class="sheet-foot">
+        <button class="btn ghost" onclick="closeReservation()" data-i18n="cancel">取消</button>
+        <button class="btn" onclick="submitReservation()" data-i18n="confirm">确认预约</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API='/api';
+const earphoneId=new URLSearchParams(location.search).get('earphone_id')||'';
+
+let earphone=null, bluetoothDevice=null, connected=false, previewMode=false, programs=[];
+
+// ---------- 国际化 ----------
+const I18N={
+  zh:{title:'芙蓉国粹 · 蜀戏冠天下',conn:'已连接',connOff:'未连接',s1:'扫码识别',s2:'连接耳机',s3:'选择讲解',s4:'预约完成',
+      btnConnect:'连接耳机蓝牙',btnReconnect:'断开并重新连接',entryHint:'请打开手机蓝牙，并佩戴已租借的耳机，点击上方按钮完成连接后即可开始收听讲解。',
+      progTitle:'可选讲解',resType:'预约类型',optFull:'文本 + 语音',optVoice:'仅语音',optText:'仅文本',
+      resName:'您的称呼',resNamePh:'请输入称呼（选填）',resContact:'联系方式',resContactPh:'手机号/微信号（选填）',
+      cancel:'取消',confirm:'确认预约',viewContent:'查看内容',book:'预约讲解',listen:'试听内容',listenStop:'停止播放',
+      nar:'讲解',ven:'场馆',min:'分钟',eLoading:'耳机识别中...',filterAll:'全部',speakHint:'（语音朗读试听）',
+      voicePanel:'语音播报设置',vpLang:'翻译语言',vpVoice:'音色',vpMode:'播报模式',modeTranslate:'纯翻译',modeOriginal:'原声+翻译',
+      play:'播放',active:'播放',playing:'正在播放',stop:'停止',loadVoices:'（加载音色中）',noVoice:'（无可用音色）',
+      translating:'正在翻译...',originalHint:'正在播放原声...',stopped:'已停止播报',btnPreview:'试听模式 · 免蓝牙',previewMode:'试听模式',
+      langTitle:'选择您的语言',langSub:'请选择讲解语言，界面与语音将同步适配。'},
+  en:{title:'Chuanshu Grand Theatre',conn:'Connected',connOff:'Not connected',s1:'Scan',s2:'Connect',s3:'Choose',s4:'Done',
+      btnConnect:'Connect Earphone',btnReconnect:'Disconnect & Reconnect',entryHint:'Turn on Bluetooth and wear your rented earphone, tap connect to start.',
+      progTitle:'Available Guides',resType:'Reservation Type',optFull:'Text + Voice',optVoice:'Voice only',optText:'Text only',
+      resName:'Your Name',resNamePh:'Optional',resContact:'Contact',resContactPh:'Optional',
+      cancel:'Cancel',confirm:'Confirm',viewContent:'View',book:'Book',listen:'Listen',listenStop:'Stop',
+      nar:'By',ven:'Venue',min:'min',eLoading:'Identifying...',filterAll:'All',speakHint:'(voice preview)',
+      voicePanel:'Voice Settings',vpLang:'Language',vpVoice:'Voice',vpMode:'Mode',modeTranslate:'Translate',modeOriginal:'Original + Translate',
+      play:'Play',active:'Playing',playing:'Playing',stop:'Stop',loadVoices:'(loading voices)',noVoice:'(no voices)',
+      translating:'Translating...',originalHint:'Playing original...',stopped:'Stopped',btnPreview:'Preview · no Bluetooth',previewMode:'Preview mode',
+      langTitle:'Choose your language',langSub:'Pick a language; the interface and audio will adjust.'}
+};
+let lang=localStorage.getItem('guide_lang')||'zh';
+function toggleLang(){lang=lang==='zh'?'en':'zh';localStorage.setItem('guide_lang',lang);applyLang();}
+
+// ---------- 扫码语言选择（强制弹层） ----------
+// 主要语言：立即可用，精确覆盖世界主要游客群体；其余小语种置灰「即将支持」。
+const MAJOR_LANGS=['zh-CN','en','es','fr','ar','ru','pt','ja','de','ko','it','id','tr','vi','th','hi'];
+const LANG_FLAG={'zh-CN':'🇨🇳','en':'🇬🇧','es':'🇪🇸','fr':'🇫🇷','ar':'🇸🇦','ru':'🇷🇺','pt':'🇧🇷','ja':'🇯🇵','de':'🇩🇪','ko':'🇰🇷','it':'🇮🇹','id':'🇮🇩','tr':'🇹🇷','vi':'🇻🇳','th':'🇹🇭','hi':'🇮🇳'};
+// 已选语言（TTS 目标语言），扫码后由弹层决定
+let guideLang=localStorage.getItem('guide_tts_lang')||'';
+function renderLangOverlay(){
+  const langs=languages.length?languages:(CORE_LANGS);
+  const majors=langs.filter(l=>MAJOR_LANGS.includes(l.code));
+  const minors=langs.filter(l=>!MAJOR_LANGS.includes(l.code));
+  const grid=(items,disabled)=>items.map(l=>`
+    <div class="lang-item ${disabled?'disabled':''}" data-lang="${l.code}" ${disabled?'':`onclick="pickLang('${l.code}')"`}>
+      <div>
+        <div class="li-name">${LANG_FLAG[l.code]||'🌐'} ${esc(l.name_native)}</div>
+        <div class="li-en">${esc(l.name_en)}</div>
+      </div>
+      ${disabled?'<span class="li-soon">即将支持</span>':''}
+    </div>`).join('');
+  $('lang-groups').innerHTML=
+    '<div class="lang-group-title">'+(lang==='zh'?'主要语言':'Available languages')+'</div>'+
+    '<div class="lang-grid">'+grid(majors,false)+'</div>'+
+    '<div class="lang-group-title">'+(lang==='zh'?'小语种（即将支持）':'More languages (coming soon)')+'</div>'+
+    '<div class="lang-grid">'+grid(minors,true)+'</div>';
+}
+function pickLang(code){
+  // 统一入口：弹层选择语言，同步到下拉框与 UI
+  applyGuideLang(code);
+  closeLangOverlay();
+}
+// 关闭语言弹层：未选择语言时默认中文，保证可进入主流程
+function closeLangOverlay(){
+  if(!guideLang)applyGuideLang('zh-CN');
+  $('lang-overlay').classList.add('hidden');
+}
+// 语言统一状态：任一来源（弹层/下拉框）改动都同步 guideLang、UI 语言与 localStorage
+function applyGuideLang(code){
+  guideLang=code;
+  localStorage.setItem('guide_tts_lang',code);
+  lang=(code==='zh-CN'||code.startsWith('zh'))?'zh':'en';
+  localStorage.setItem('guide_lang',lang);
+  applyLang();
+  const sel=$('vp-lang');
+  if(sel&&sel.value!==undefined)sel.value=languages.some(l=>l.code===code)?code:code;
+}
+function showLangOverlay(){renderLangOverlay();$('lang-overlay').classList.remove('hidden');}
+// 兜底语言清单（接口加载失败时使用，保证弹层可用）
+const CORE_LANGS=[
+  {code:'zh-CN',name_en:'Chinese (Simplified)',name_native:'中文'},
+  {code:'en',name_en:'English',name_native:'English'},
+  {code:'ja',name_en:'Japanese',name_native:'日本語'},
+  {code:'ko',name_en:'Korean',name_native:'한국어'},
+  {code:'fr',name_en:'French',name_native:'Français'},
+  {code:'es',name_en:'Spanish',name_native:'Español'},
+  {code:'de',name_en:'German',name_native:'Deutsch'},
+  {code:'ru',name_en:'Russian',name_native:'Русский'},
+];
+function applyLang(){
+  const t=I18N[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(t[k]!==undefined)el.textContent=t[k];});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{const k=el.dataset.i18nPh;if(t[k]!==undefined)el.placeholder=t[k];});
+  $('btn-lang').textContent=lang==='zh'?'EN':'中';
+  if(connected)$('conn-text').textContent=t.conn;else if(previewMode)$('conn-text').textContent=t.previewMode;else $('conn-text').textContent=t.connOff;
+  if(programs.length)renderPrograms();
+}
+
+// ---------- 工具 ----------
+function $(id){return document.getElementById(id);}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function setConn(ok,text){$('conn-dot').className='dot '+(ok?'ok':'err');$('conn-text').textContent=text;}
+function t(k){return (I18N[lang]&&I18N[lang][k])||k;}
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function api(path,method='GET',body){const r=await fetch(API+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(j.code!==0&&j.code!==undefined&&j.code!==200&&j.code!==404)throw new Error(j.message||'请求失败');return j;}
+
+// ---------- 语音试听 ----------
+function textOf(p){return p.content_type==='voice'?(p.voice_content||p.text_content):p.text_content;}
+
+// ---------- 语音播报：语言 / 音色 / 模式 ----------
+let languages=[], edgeVoices=[], systemVoices=[], currentAudio=null;
+function toastStatus(msg,playing){const el=$('vp-status');if(!el)return;el.textContent=msg;el.className='vp-status'+(playing?' playing':'');}
+
+async function loadLanguages(){
+  try{const j=await api('/languages');languages=j.data||[];}
+  catch(e){languages=[];}
+  if(!languages.length)return;
+  const sel=$('vp-lang');
+  sel.innerHTML=languages.map(l=>`<option value="${l.code}">${esc(l.name_native)} (${esc(l.name_en)})</option>`).join('');
+  const saved=localStorage.getItem('guide_vlang');
+  sel.value=languages.some(l=>l.code===saved)?saved:languages[0].code;
+  await loadTTSVoices();
+}
+// 加载浏览器本机音色（作为云音色不可用时的兜底）
+function loadSystemVoices(){
+  if(!('speechSynthesis' in window))return;
+  const pop=()=>{systemVoices=speechSynthesis.getVoices()||[];};
+  pop();
+  speechSynthesis.onvoiceschanged=pop;
+}
+// 加载 Edge 云音色（免费、音色丰富、无需 Key）
+async function loadTTSVoices(){
+  try{const j=await api('/tts/voices');edgeVoices=j.data||[];}
+  catch(e){edgeVoices=[];}
+  refreshVoices();
+}
+function refreshVoices(){
+  const sel=$('vp-voice');if(!sel)return;
+  const lang=vpLang();
+  const list=edgeVoices.filter(v=>v.lang===lang);
+  if(!list.length){sel.innerHTML='<option value="">'+(lang==='zh'?t('noVoice'):t('noVoice'))+'</option>';sel.disabled=true;return;}
+  sel.disabled=false;
+  sel.innerHTML=list.map(v=>`<option value="${esc(v.id)}">${esc(v.name)} · ${v.gender==='M'?'男':'女'}</option>`).join('');
+  const saved=localStorage.getItem('guide_vvoice');
+  sel.value=(saved&&list.some(v=>v.id===saved))?saved:list[0].id;
+}
+function selectedVoiceId(){const sel=$('vp-voice');if(!sel||sel.disabled)return '';return sel.value;}
+function edgeVoiceForLang(code){const v=edgeVoices.find(x=>x.lang===code);return v?v.id:'';}
+function vpLang(){return $('vp-lang').value;}
+function vpMode(){const r=document.querySelector('input[name=vp-mode]:checked');return r?r.value:'translate';}
+
+async function translateText(text,target){
+  if(!text)return '';
+  if(!target||target==='zh-CN'||target.startsWith('zh'))return text;
+  try{const j=await api('/translate','POST',{text,target,source:'zh-CN'});return (j.data&&j.data.text)||text;}
+  catch(e){return text;}
+}
+
+// 云合成：返回一个可播放的 Audio 元素（blob + objectURL，离线可缓存）
+const VOICE_DB='shuyin_voice',VOICE_STORE='voice';
+let voiceDBPromise=null;
+function openVoiceDB(){
+  if(voiceDBPromise)return voiceDBPromise;
+  voiceDBPromise=new Promise((res,rej)=>{
+    const q=indexedDB.open(VOICE_DB,1);
+    q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(VOICE_STORE))q.result.createObjectStore(VOICE_STORE);};
+    q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);
+  });
+  return voiceDBPromise;
+}
+async function voiceGet(key){try{const db=await openVoiceDB();return await new Promise((res,rej)=>{const rq=db.transaction(VOICE_STORE).objectStore(VOICE_STORE).get(key);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>rej(rq.error);});}catch(e){return null;}}
+async function voicePut(key,blob){try{const db=await openVoiceDB();await new Promise((res,rej)=>{const tx=db.transaction(VOICE_STORE,'readwrite');tx.objectStore(VOICE_STORE).put(blob,key);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(e){}}
+function voiceCacheKey(id,target){return 'v:'+id+':'+target;}
+// 获取音频 Blob：优先缓存，否则请求后端合成并写入缓存；统一 blob + objectURL 播放
+async function fetchVoiceBlob(id,text,target,voiceId){
+  const key=voiceCacheKey(id,target);
+  const cached=await voiceGet(key);
+  if(cached)return cached;
+  const params=new URLSearchParams({text});
+  params.set('lang',target);
+  if(voiceId)params.set('voice',voiceId);
+  const r=await fetch(API+'/tts/synthesize?'+params.toString());
+  if(!r.ok)throw new Error('TTS '+r.status);
+  const blob=await r.blob();
+  if(blob&&blob.size>0)await voicePut(key,blob);
+  return blob;
+}
+// 浏览器 TTS 兜底
+function browserSpeak(text,lang){
+  if(!('speechSynthesis' in window))return;
+  if(speechSynthesis.speaking)speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  const prefix=lang.split('-')[0].toLowerCase();
+  const v=systemVoices.find(x=>(x.lang||'').toLowerCase().startsWith(prefix));
+  if(v){u.voice=v;u.lang=v.lang;}else{u.lang=lang;}
+  u.rate=1;
+  speechSynthesis.speak(u);
+}
+// 优先云音色，失败则回退浏览器音色
+async function playText(id,text,lang,voiceId){
+  if(voiceId){
+    try{
+      const blob=await fetchVoiceBlob(id,text,lang,voiceId);
+      const a=new Audio(URL.createObjectURL(blob));
+      currentAudio=a;
+      await a.play();
+      return;
+    }catch(e){}
+  }
+  stopAudio();
+  browserSpeak(text,lang);
+}
+function stopAudio(){if(currentAudio){try{currentAudio.pause();}catch(e){}currentAudio=null;}}
+
+async function playProgram(id){
+  const p=programs.find(x=>x.id===id);if(!p)return;
+  stopVoice();
+  const mode=vpMode();
+  // 目标语言：以下拉框当前选择为准（弹层选择后已同步到下拉框）
+  const target=vpLang()||guideLang||'zh-CN';
+  const source=textOf(p);
+  const voiceId=selectedVoiceId();
+  const zhVoiceId=edgeVoiceForLang('zh-CN');
+  if(mode==='original'&&p.audio_url){
+    // 原声 + 翻译：先播原声文件，再接翻译
+    toastStatus(t('originalHint')+' 🎵',true);
+    const original=new Audio(p.audio_url);currentAudio=original;
+    original.play().catch(()=>{});
+    original.onended=()=>{currentAudio=null;playTranslated(id,source,target,voiceId);};
+    original.onerror=()=>{currentAudio=null;playTranslated(id,source,target,voiceId);};
+  }else if(mode==='original'){
+    // 无原声文件：先云合成中文原文（原声），再接翻译
+    toastStatus(t('originalHint')+' ...',true);
+    await playText(id,source,'zh-CN',zhVoiceId);
+    await waitSpeechEnd();
+    playTranslated(id,source,target,voiceId);
+  }else{
+    // 纯翻译
+    toastStatus(t('translating')+' ...',true);
+    playTranslated(id,source,target,voiceId);
+  }
+}
+async function playTranslated(id,source,target,voiceId){
+  toastStatus(t('translating')+' ...',true);
+  const tr=await translateText(source,target);
+  const isZh=(target==='zh-CN'||target.startsWith('zh'));
+  // 目标语言音色：中文用中文音色，其它用目标语言音色（而非用户选中的中文音色）
+  const effVoice=isZh?edgeVoiceForLang('zh-CN'):edgeVoiceForLang(target);
+  toastStatus('🔊 '+t('playing'),true);
+  await playText(id,tr,target,effVoice);
+}
+// 等待当前浏览器语音或云音频播完
+function waitSpeechEnd(){
+  return new Promise(resolve=>{
+    if(currentAudio){currentAudio.onended=()=>resolve();setTimeout(resolve,0);}
+    else if('speechSynthesis' in window){speechSynthesis.onend=()=>{speechSynthesis.onend=null;resolve();};}
+    else resolve();
+  });
+}
+function stopVoice(){
+  stopAudio();
+  if('speechSynthesis' in window)speechSynthesis.cancel();
+  toastStatus(t('stopped'),false);
+}
+
+// ---------- 步骤 ----------
+let allowStep=1;
+function setStep(n){
+  allowStep=Math.max(allowStep,n);
+  for(let i=1;i<=4;i++){const el=$('step-'+i);el.className='step clickable'+(i<n?' done':(i===n?' active':''));
+    el.style.pointerEvents=(i<=allowStep&&i<=3)?'auto':'none';el.style.opacity=(i>allowStep)?'.4':'1';}
+  changeFace(n);
+}
+// 川剧变脸：步骤切换时更换背景脸谱（4步映射到6张脸中的4张）
+const FACE_MAP=[1,2,4,6]; // 步骤1-4对应红、黑、蓝、白
+function changeFace(step){
+  const faceNum=FACE_MAP[step-1]||1;
+  const faces=document.querySelectorAll('.bg-face');
+  const cur=document.querySelector('.bg-face.active');
+  if(cur&&cur.classList.contains('face-'+faceNum))return;
+  faces.forEach((f,i)=>{if(i===faceNum-1)f.classList.add('active');else f.classList.remove('active');});
+  const flash=$('bg-flash');
+  flash.classList.remove('fire');
+  void flash.offsetWidth;
+  flash.classList.add('fire');
+}
+function goStep(n){
+  if(n>allowStep||n>3)return;
+  if(n===1){ // 回到扫码识别
+    if(previewMode){previewMode=false;setConn(false,lang==='zh'?'未连接':'Not connected');}
+    if(connected)disconnect();
+    else{$('btn-connect').removeAttribute('disabled');}
+    $('view-programs').classList.add('hidden');
+    $('view-entry').classList.remove('hidden');
+    setStep(1);
+  }else if(n===2){ // 回到连接页面
+    $('view-programs').classList.add('hidden');
+    $('view-entry').classList.remove('hidden');
+    setStep(2);
+  }else if(n===3){ // 展示节目
+    if((connected||previewMode)&&programs.length){
+      $('view-entry').classList.add('hidden');
+      $('view-programs').classList.remove('hidden');
+      setStep(3);
+    }
+  }
+}
+
+// ---------- 第一步：扫码识别 ----------
+async function initEntry(){
+  if(!earphoneId){$('entry-msg').className='status-msg err';$('entry-msg').textContent=lang==='zh'?'未检测到耳机二维码，请重新扫码进入。':'No QR detected, please rescan.';return;}
+  $('earphone-qr').textContent=(lang==='zh'?'二维码：':'QR: ')+earphoneId;
+  try{
+    const j=await api('/earphones/'+encodeURIComponent(earphoneId)+'/check');
+    earphone=j.data.earphone;
+    $('earphone-name').textContent=earphone.name||earphone.qr_code_id||t('eLoading');
+    const unsupported=!('bluetooth' in navigator);
+    if(unsupported){
+      $('entry-msg').className='status-msg warn';
+      $('entry-msg').textContent=lang==='zh'?'当前浏览器不支持 Web Bluetooth，无法进行耳机实时连接校验。请使用 Chrome/Edge 浏览器打开。':'Web Bluetooth not supported. Use Chrome/Edge.';
+      $('btn-connect').setAttribute('disabled','disabled');return;
+    }
+    $('entry-msg').className='status-msg ok';
+    $('entry-msg').textContent=lang==='zh'?'耳机已识别 ✅ 请点击下方按钮连接蓝牙，验证实时连接后即可收听。':'Earphone identified ✅ tap connect below.';
+    $('btn-connect').removeAttribute('disabled');
+  }catch(e){$('entry-msg').className='status-msg err';$('entry-msg').textContent=e.message;}
+}
+
+// ---------- 第二步：连接蓝牙 ----------
+async function connectBluetooth(){
+  if(!('bluetooth' in navigator)){toast('Web Bluetooth unsupported');return;}
+  $('btn-connect').setAttribute('disabled','disabled');
+  try{
+    const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[]});
+    bluetoothDevice=device;
+    const server=device.gatt?await device.gatt.connect():null;
+    const deviceName=device.name||'';
+    const serial=device.id||'';
+    const resp=await api('/earphones/'+encodeURIComponent(earphoneId)+'/check?device_name='+encodeURIComponent(deviceName)+'&serial_number='+encodeURIComponent(serial));
+    const ble=resp.data.bluetooth;
+    if(!ble.matched){
+      setConn(false,lang==='zh'?'连接异常':'Fail');setStep(2);
+      $('entry-msg').className='status-msg err';
+      $('entry-msg').textContent=(lang==='zh'?'蓝牙校验未通过：':'Verify failed: ')+ble.reason;
+      $('btn-connect').removeAttribute('disabled');return;
+    }
+    connected=true;
+    setStep(2);
+    $('entry-msg').className='status-msg ok';
+    $('entry-msg').textContent=lang==='zh'?'耳机实时连接校验通过 ✅ 正在加载讲解内容...':'Connected ✅ loading guides...';
+    device.addEventListener('gattserverdisconnected',()=>{
+      connected=false;setConn(false,lang==='zh'?'已断开':'Disconnected');
+      toast(lang==='zh'?'耳机连接已断开，请重新连接':'Earphone disconnected');
+      $('view-programs').classList.add('hidden');$('view-entry').classList.remove('hidden');
+      setStep(1);$('btn-connect').removeAttribute('disabled');
+    });
+    await loadPrograms();
+  }catch(e){
+    setConn(false,lang==='zh'?'校验失败':'Fail');
+    $('entry-msg').className='status-msg warn';
+    $('entry-msg').textContent=(lang==='zh'?'未完成蓝牙连接：':'Not connected: ')+(e.message||'cancel');
+    $('btn-connect').removeAttribute('disabled');
+  }
+}
+function disconnect(){
+  if(bluetoothDevice&&bluetoothDevice.gatt&&bluetoothDevice.gatt.connected)bluetoothDevice.gatt.disconnect();
+  connected=false;setStep(1);setConn(false,lang==='zh'?'已断开':'Disconnected');
+  $('view-programs').classList.add('hidden');$('view-entry').classList.remove('hidden');
+  $('entry-msg').className='status-msg ok';$('entry-msg').textContent=lang==='zh'?'已断开耳机连接，可重新连接。':'Disconnected. You can reconnect.';
+  $('btn-connect').removeAttribute('disabled');
+}
+
+// ---------- 第三步：节目列表 ----------
+let filterType='all';
+// 加载已上架节目并进入节目列表
+async function loadPrograms(){
+  try{
+    const j=await api('/programs/public?lang='+(lang==='zh'?'zh':'en'));
+    programs=j.data&&j.data.items?j.data.items:[];
+  }catch(e){programs=[];toast((lang==='zh'?'节目加载失败：':'Load failed: ')+e.message);}
+  $('view-entry').classList.add('hidden');
+  $('view-programs').classList.remove('hidden');
+  setStep(3);
+  renderPrograms();
+}
+// 试听模式：免蓝牙直接进入节目列表，方便无耳机时测试页面功能
+async function enterPreview(){
+  previewMode=true;
+  setConn(true,lang==='zh'?'试听模式':'Preview');
+  $('entry-msg').className='status-msg ok';
+  $('entry-msg').textContent=lang==='zh'?'已进入试听模式（免蓝牙），可直接测试讲解与多语言朗读。':'Preview mode (no Bluetooth) enabled.';
+  if(!programs.length){
+    $('entry-msg').textContent+=(lang==='zh'?' 正在加载节目...':' loading guides...');
+    await loadPrograms();
+  }else{
+    $('view-entry').classList.add('hidden');
+    $('view-programs').classList.remove('hidden');
+    setStep(3);
+    renderPrograms();
+  }
+}
+function renderFilter(){
+  const types=[['all','filterAll'],['full','optFull'],['voice','optVoice'],['text','optText']];
+  $('filter-bar').innerHTML=types.map(([v,k])=>`<span class="chip ${filterType===v?'active':''}" onclick="setFilter('${v}')">${t(k)}</span>`).join('');
+}
+function setFilter(v){filterType=v;renderFilter();renderPrograms();}
+function progLabel(ct){return {full:'full',voice:'voice',text:'text'}[ct]||'full';}
+function renderPrograms(){
+  if(!programs.length)return;
+  renderFilter();
+  const list=programs.filter(p=>filterType==='all'||p.content_type===filterType);
+  $('prog-count').textContent=(lang==='zh'?'共 ':'')+list.length+(lang==='zh'?' 个':'');
+  if(!list.length){$('prog-list').innerHTML='<div class="empty">'+(lang==='zh'?'暂无该类讲解':'No items')+'</div>';return;}
+  $('prog-list').innerHTML=list.map((p,i)=>{
+    const ct=p.content_type, label=ct=='full'?t('optFull'):(ct=='voice'?t('optVoice'):t('optText'));
+    const tagCls=ct=='voice'?'voice':(ct=='text'?'text':'');
+    const txt=textOf(p);
+    return `<div class="prog">
+      <div class="prog-head" onclick="toggleProg(this)">
+        <div class="p-time"><div class="t">${pad(i+1)}</div><div class="s">${label}</div></div>
+        <div class="p-body">
+          <h3>${esc(p.title)}<span class="tag ${tagCls}">${label}</span></h3>
+          ${p.intro?`<div class="p-intro">${esc(p.intro)}</div>`:''}
+          <div class="meta">
+            <span>${t('nar')}: ${esc(p.narrator)||'-'}</span>
+            <span>${esc(p.venue)||'-'}</span>
+            <span>${p.duration_min}${t('min')}</span>
+          </div>
+          <div class="price">¥${p.price}<small> ${lang==='zh'?'起/人':'/person'}</small></div>
+        </div>
+        <div class="chev">▾</div>
+      </div>
+      <div class="prog-content">
+        <div class="content-block ${txt?'':'empty'}">${txt?('<span class="cb-label">'+t('optText')+'</span>'+esc(txt)):(lang==='zh'?'暂无文本内容':'No text content')}</div>
+        <div class="prog-actions">
+          <button class="btn small ghost" onclick="openReservation(${p.id});event.stopPropagation()">${t('book')}</button>
+          <button class="btn small play-btn" onclick="playProgram(${p.id});event.stopPropagation()">▶ ${t('play')}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleProg(head){const card=head.closest('.prog');card.classList.toggle('expanded');}
+
+// ---------- 第四步：预约 ----------
+let currentProgram=null;
+function openReservation(id){
+  currentProgram=programs.find(p=>p.id===id);
+  if(!currentProgram)return;
+  $('res-title').textContent=(lang==='zh'?'预约 · ':'Book · ')+currentProgram.title;
+  renderResPreview();
+  $('res-overlay').classList.remove('hidden');
+}
+function renderResPreview(){
+  if(!currentProgram)return;
+  const type=$('res-type').value;
+  const txt=type==='voice'?currentProgram.voice_content:currentProgram.text_content;
+  $('res-preview').innerHTML='<span class="cb-label">'+(lang==='zh'?'内容预览':'Preview')+'</span>'+(txt?esc(txt):(lang==='zh'?'（所选类型暂无内容）':'(no content for type)'));
+}
+function closeReservation(){$('res-overlay').classList.add('hidden');}
+async function submitReservation(){
+  if(!connected&&!previewMode){toast(lang==='zh'?'请先保持耳机蓝牙已连接':'Keep earphone connected');return;}
+  if(!currentProgram)return;
+  try{
+    await api('/reservations','POST',{
+      earphone_id:earphone?earphone.id:0,qr_code_id:earphoneId||'preview',program_id:currentProgram.id,
+      program_title:currentProgram.title,book_type:$('res-type').value,
+      customer_name:$('res-name').value.trim(),contact:$('res-contact').value.trim(),
+    });
+    closeReservation();setStep(4);
+    // 预约成功卡片：展示内容 + 试听
+    const txt=textOf(currentProgram);
+    $('view-programs').classList.add('hidden');$('view-entry').classList.remove('hidden');
+    $('entry-msg').className='status-msg ok';
+    $('entry-msg').textContent=(lang==='zh'?'预约成功 ✅ 已为你预约「':'Booked ✅ "')+currentProgram.title+(lang==='zh'?'」讲解。可试听或继续预约。':'" guide. Listen or book more.');
+    $('btn-connect').removeAttribute('disabled');
+    toast(lang==='zh'?'预约成功':'Booked');
+  }catch(e){toast((lang==='zh'?'预约失败：':'Book failed: ')+e.message);}
+}
+function pad(n){return n<10?'0'+n:''+n;}
+
+// ---------- 初始化 ----------
+applyLang();
+loadSystemVoices();
+$('vp-lang').addEventListener('change',function(){localStorage.setItem('guide_vlang',this.value);applyGuideLang(this.value);refreshVoices();});
+$('vp-voice').addEventListener('change',function(){localStorage.setItem('guide_vvoice',this.value);});
+loadLanguages();
+// 耳机识别后台进行，不阻塞语言选择
+initEntry();
+// 点击弹层背景空白处关闭（点击内部 sheet 不关闭）
+$('lang-overlay').addEventListener('click',function(e){if(e.target===this)closeLangOverlay();});
+// 扫码后强制选择语言：仅有已保存选择时直接隐藏弹层跳过
+if(!guideLang){
+  // 首次访问：等语言清单就绪后渲染并弹出选择层；接口加载失败也给固定兜底，避免空弹层卡死
+  let shown=false;
+  const t=setInterval(()=>{if(languages.length){clearInterval(t);renderLangOverlay();$('lang-overlay').classList.remove('hidden');shown=true;}},120);
+  setTimeout(()=>{clearInterval(t);if(!shown){renderLangOverlay();$('lang-overlay').classList.remove('hidden');}},2500);
+}else{
+  // 老用户：已保存过语言，直接隐藏空弹层，避免遮挡主流程
+  $('lang-overlay').classList.add('hidden');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>川蜀大剧院 管理后台</title>
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<style>
+/* ============ 川蜀大剧院 · 管理后台 v2（2026-09-06 落地 redesign 预览稿） ============
+   基因：近黑 #0A0604 / 朱砂 #C73E3A / 鎏金 #E8B34B / 宣纸 #F5EDE0
+   登录=惊艳位，工作台=克制信息密度；类名契约与 v1 一致（JS 模板零改动） */
+:root{
+  --black:#0A0604; --cinnabar:#C73E3A; --cinnabar-deep:#8B1A1A; --gold:#E8B34B;
+  --paper:#F5EDE0; --smoke:#9A8471;
+  --bg:#F7F2E9; --card:#FFFDF8; --ink:#241A12; --ink-2:#5C4A3A; --ink-3:#9A8B7A;
+  --line:#E6DAC4; --ok:#3F6D4E; --warn:#B07A1E; --danger:#C73E3A; --info:#3A6D8C;
+  --primary:var(--cinnabar); --primary-hover:var(--cinnabar-deep);
+  --primary-light:rgba(199,62,58,.08);
+  --text:var(--ink); --text-secondary:var(--ink-2); --text-muted:var(--ink-3); --muted:var(--ink-3);
+  --border:var(--line); --border-light:rgba(230,218,196,.5); --bg-alt:rgba(230,218,196,.35);
+  --accent:var(--cinnabar);
+  --sidebar-bg:var(--black); --sidebar-hover:rgba(245,237,224,.05); --sidebar-active:rgba(199,62,58,.16);
+  --shadow-sm:0 1px 3px rgba(36,26,18,.05); --shadow-md:0 4px 14px rgba(36,26,18,.08);
+  --shadow-lg:0 24px 60px rgba(0,0,0,.35);
+  --serif:'Noto Serif SC',serif; --brush:'Ma Shan Zheng',cursive; --latin:'Outfit',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--serif);background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ========== 登录页（惊艳位：全屏脸谱 + 追光 + 书法题字 + 玻璃卡） ========== */
+#login-page{
+  position:relative;min-height:100vh;background:var(--black);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+#login-page .face{
+  position:absolute;inset:0;
+  -webkit-mask-image:radial-gradient(ellipse 72% 66% at 50% 40%,#000 34%,rgba(0,0,0,.2) 66%,transparent 88%);
+  mask-image:radial-gradient(ellipse 72% 66% at 50% 40%,#000 34%,rgba(0,0,0,.2) 66%,transparent 88%);
+}
+#login-page .face img{width:100%;height:100%;object-fit:cover;object-position:center 26%;transform:scale(1.28)}
+#login-page::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:
+    radial-gradient(110% 80% at 50% 40%,transparent 40%,rgba(10,6,4,.72) 100%),
+    linear-gradient(90deg,rgba(10,6,4,.92) 0%,transparent 22%,transparent 78%,rgba(10,6,4,.92) 100%),
+    linear-gradient(180deg,rgba(10,6,4,.6),transparent 22%,transparent 60%,rgba(10,6,4,.85));
+}
+#login-page .brandline{
+  position:absolute;top:26px;left:0;right:0;z-index:3;display:flex;
+  justify-content:space-between;align-items:center;padding:0 34px;
+  font-family:var(--latin);font-size:10px;letter-spacing:.32em;color:rgba(245,237,224,.6);
+}
+#login-page .brandline .sq{
+  font-family:var(--brush);letter-spacing:0;font-size:15px;color:var(--paper);
+  background:var(--cinnabar);padding:3px 10px;border-radius:3px;transform:rotate(-2deg);
+}
+#login-page .brush-title{
+  position:absolute;left:6%;top:50%;transform:translateY(-50%);z-index:3;
+  writing-mode:vertical-rl;display:flex;align-items:center;gap:20px;
+}
+#login-page .brush-title .big{
+  font-family:var(--brush);font-size:88px;line-height:1;letter-spacing:.14em;
+  color:var(--paper);text-shadow:0 8px 40px rgba(10,6,4,.9),0 0 80px rgba(199,62,58,.4);
+}
+#login-page .brush-title .seal{
+  width:34px;height:34px;display:grid;place-items:center;flex-shrink:0;
+  background:var(--cinnabar);font-family:var(--brush);font-size:15px;color:var(--paper);
+  border-radius:5px;transform:rotate(4deg);box-shadow:0 4px 16px rgba(199,62,58,.5);
+}
+#login-page .brush-title .sub{
+  font-family:var(--latin);font-size:10px;letter-spacing:.4em;color:var(--gold);
+  writing-mode:horizontal-tb;
+}
+.login-card{
+  position:relative;z-index:4;width:380px;max-width:90vw;
+  background:rgba(23,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(232,179,75,.35);border-radius:18px;padding:34px 32px 30px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  margin-right:8%;animation:cardIn .45s cubic-bezier(.2,.7,.3,1);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.login-card h1{
+  font-family:var(--serif);font-weight:900;font-size:21px;color:var(--paper);
+  letter-spacing:.14em;margin-bottom:4px;text-align:left;
+}
+.login-card .sub{
+  font-size:11px;color:var(--smoke);letter-spacing:.24em;margin-bottom:26px;font-family:var(--latin);
+}
+.login-card .field{margin-bottom:16px}
+.login-card .field label{
+  display:block;font-size:11px;color:var(--gold);letter-spacing:.2em;margin-bottom:7px;
+}
+.login-card input{
+  width:100%;padding:13px 15px;border-radius:10px;font-size:14px;font-family:inherit;
+  background:rgba(10,6,4,.55);border:1px solid rgba(232,179,75,.22);color:var(--paper);
+  transition:border-color .25s,box-shadow .25s;
+}
+.login-card input::placeholder{color:rgba(154,132,113,.7)}
+.login-card input:focus{
+  outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,179,75,.14);
+}
+.login-card button.login-btn{
+  width:100%;margin-top:8px;padding:14px;border-radius:10px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--cinnabar),var(--cinnabar-deep));
+  color:var(--paper);font-size:15px;font-weight:700;letter-spacing:.5em;text-indent:.5em;font-family:inherit;
+  box-shadow:0 8px 26px rgba(199,62,58,.45);
+  transition:transform .2s ease-out,box-shadow .2s ease-out;
+}
+.login-card button.login-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(199,62,58,.55)}
+.login-card button.login-btn:active{transform:translateY(0)}
+.login-err{color:#F2B8AD;font-size:13px;min-height:20px;margin-bottom:6px;text-align:center}
+.login-card .foot{
+  margin-top:18px;text-align:center;font-family:var(--latin);
+  font-size:9px;letter-spacing:.3em;color:rgba(154,132,113,.6);
+}
+@media (max-width:900px){
+  #login-page .brush-title{display:none}
+  .login-card{margin:0 auto}
+  #login-page .brandline{font-size:8px;letter-spacing:.2em;padding:0 16px}
+}
+
+/* ========== 主应用布局 ========== */
+#app-page{display:flex;min-height:100vh}
+aside{
+  width:216px;background:var(--sidebar-bg);color:var(--paper);
+  flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;
+  display:flex;flex-direction:column;
+  border-right:1px solid rgba(232,179,75,.18);
+}
+aside .brand{
+  display:flex;align-items:center;gap:11px;padding:20px 20px 18px;
+  border-bottom:1px solid rgba(232,179,75,.14);
+}
+aside .brand .seal{
+  width:36px;height:36px;display:grid;place-items:center;flex-shrink:0;
+  background:linear-gradient(145deg,var(--cinnabar),var(--cinnabar-deep));
+  font-family:var(--brush);font-size:18px;color:var(--paper);border-radius:7px;transform:rotate(-3deg);
+  box-shadow:0 3px 12px rgba(199,62,58,.45);
+}
+aside .brand .t{font-family:var(--brush);font-size:19px;letter-spacing:.06em}
+aside nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+aside .nav-group{
+  padding:14px 14px 5px;font-family:var(--latin);font-size:10px;
+  letter-spacing:.28em;color:rgba(245,237,224,.35);
+}
+aside nav a{
+  display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:9px;
+  color:#BCA893;font-size:13.5px;letter-spacing:.05em;cursor:pointer;text-decoration:none;
+  transition:background .2s,color .2s;position:relative;
+}
+aside nav a .nav-icon{
+  width:17px;display:inline-flex;align-items:center;justify-content:center;
+  opacity:.8;font-size:13px;font-style:normal;
+}
+aside nav a:hover{background:var(--sidebar-hover);color:var(--paper)}
+aside nav a.active{background:var(--sidebar-active);color:var(--paper);font-weight:700}
+aside nav a.active::before{
+  content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+  width:3px;height:22px;background:var(--gold);border-radius:0 3px 3px 0;
+}
+aside nav a.nav-logout{margin-top:14px;border-top:1px solid rgba(232,179,75,.14);border-radius:0;color:var(--smoke)}
+aside nav a.nav-logout:hover{color:var(--cinnabar);background:rgba(199,62,58,.08)}
+
+main{flex:1;padding:26px 30px 60px;min-width:0;background:var(--bg)}
+main header.top{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  margin-bottom:20px;flex-wrap:wrap;gap:14px;
+}
+main header.top .k{
+  font-family:var(--latin);font-size:10px;letter-spacing:.3em;
+  color:var(--ink-3);margin-bottom:4px;
+}
+main header.top h2{
+  font-size:26px;font-weight:900;color:var(--ink);
+  font-family:var(--serif);letter-spacing:.02em;
+}
+main header.top h2::after{content:'。';color:var(--cinnabar)}
+#header-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+
+/* 按钮 */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 17px;border:none;border-radius:9px;font-size:13px;font-weight:700;
+  letter-spacing:.06em;cursor:pointer;color:var(--paper);background:var(--cinnabar);
+  transition:all .2s ease-out;font-family:inherit;
+  box-shadow:0 4px 14px rgba(199,62,58,.3);
+}
+.btn:hover{background:var(--cinnabar-deep)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:var(--card);color:var(--ink-2);border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{border-color:var(--gold);color:var(--ink);box-shadow:none}
+.btn.danger{background:var(--card);color:var(--cinnabar);border:1px solid rgba(199,62,58,.4);box-shadow:none}
+.btn.danger:hover{background:rgba(199,62,58,.06);box-shadow:none}
+.btn.sm{padding:5px 12px;font-size:12px;border-radius:7px}
+
+/* 卡片 */
+.card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:14px;margin-bottom:16px;
+  box-shadow:var(--shadow-sm);overflow:hidden;
+}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:13px 18px;border-bottom:1px solid var(--border-light);vertical-align:middle}
+th{
+  color:var(--ink-2);font-weight:900;background:var(--bg-alt);
+  font-size:12px;letter-spacing:.14em;white-space:nowrap;
+}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:rgba(232,179,75,.06)}
+tbody tr:last-child td{border-bottom:none}
+
+/* Badge（统一圆点药丸） */
+.badge{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:999px;
+  font-size:11.5px;font-weight:700;letter-spacing:.04em;line-height:1.6;white-space:nowrap;
+}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.badge.on,.badge.av,.badge.confirmed{background:rgba(63,109,78,.1);color:var(--ok)}
+.badge.off,.badge.offline,.badge.cancelled{background:rgba(122,92,74,.1);color:var(--ink-3)}
+.badge.ren,.badge.pending{background:rgba(176,122,30,.1);color:var(--warn)}
+.badge.completed{background:rgba(58,109,140,.1);color:var(--info)}
+.badge.livebadge{background:rgba(199,62,58,.1);color:var(--cinnabar)}
+.badge.livebadge::before{animation:liveblink 1.2s infinite}
+@keyframes liveblink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* 弹窗 */
+.modal{
+  position:fixed;inset:0;background:rgba(10,6,4,.6);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:50;animation:fadeIn .15s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{
+  position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  width:560px;max-width:92vw;max-height:88vh;overflow:auto;
+  padding:28px;box-shadow:var(--shadow-lg);
+  animation:slideUp .25s cubic-bezier(.2,.7,.3,1);
+}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-box h3{
+  margin-bottom:20px;font-size:18px;font-weight:900;
+  font-family:var(--serif);color:var(--ink);letter-spacing:.04em;
+}
+.modal-box h3::before{content:'';display:inline-block;width:4px;height:16px;background:var(--cinnabar);border-radius:2px;margin-right:9px;vertical-align:-2px}
+.modal-close{
+  position:absolute;top:14px;right:14px;width:32px;height:32px;
+  border:none;background:transparent;color:var(--ink-3);
+  font-size:22px;line-height:1;cursor:pointer;border-radius:8px;
+  z-index:2;transition:all .15s;
+}
+.modal-close:hover{background:var(--bg-alt);color:var(--cinnabar)}
+
+/* 表单 */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+label{display:block;font-size:12px;color:var(--ink-2);margin-bottom:6px;letter-spacing:.05em}
+input,select,textarea{
+  width:100%;padding:10px 13px;border:1px solid var(--line);
+  border-radius:9px;font-size:14px;font-family:inherit;
+  background:#fff;color:var(--ink);
+  transition:border-color .2s,box-shadow .2s;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(232,179,75,.15);
+}
+textarea{min-height:80px;resize:vertical}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+
+/* Toast */
+.toast{
+  position:fixed;top:24px;right:24px;background:var(--black);color:var(--paper);
+  padding:13px 22px;border-radius:10px;font-size:13.5px;z-index:99;
+  opacity:0;transform:translateX(20px);
+  transition:opacity .3s,transform .3s;
+  box-shadow:var(--shadow-lg);border-left:3px solid var(--gold);
+  max-width:340px;
+}
+.toast.show{opacity:1;transform:translateX(0)}
+
+.toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.toolbar select{width:auto;padding:7px 12px}
+.empty{
+  color:var(--ink-3);text-align:center;padding:48px 24px;font-size:14px;letter-spacing:.05em;
+}
+.status-filter{display:flex;gap:8px}
+
+/* 知识节点 chips */
+.chip{
+  display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card);font-size:12.5px;
+  cursor:pointer;color:var(--ink-2);transition:all .15s;user-select:none;
+}
+.chip:hover{border-color:var(--gold)}
+.chip.on{background:rgba(199,62,58,.1);border-color:rgba(199,62,58,.45);color:var(--cinnabar);font-weight:700}
+
+/* 窄屏（侧栏收成图标栏） */
+@media (max-width:960px){
+  aside{width:64px}
+  aside .brand{justify-content:center;padding:20px 8px 18px}
+  aside .brand .t,aside .nav-group{display:none}
+  aside nav a{justify-content:center;padding:12px 8px}
+  aside nav a .lbl{display:none}
+  aside nav a.active::before{display:none}
+  main{padding:20px 16px 50px}
+}
+</style>
+</head>
+<body>
+<!-- 登录页（惊艳位：全屏脸谱 + 追光 + 书法题字 + 玻璃卡） -->
+<div id="login-page">
+  <div class="face"><img src="/assets/mask-red-ai.jpg" alt="川剧脸谱"></div>
+  <div class="brandline">
+    <span>SICHUAN OPERA THEATRE</span>
+    <span class="sq">管</span>
+    <span>ADMIN · 2026</span>
+  </div>
+  <div class="brush-title">
+    <div class="big">川劇</div>
+    <div class="seal">印</div>
+    <div class="sub">CONSOLE</div>
+  </div>
+  <div class="login-card">
+    <h1>四川省川剧院</h1>
+    <div class="sub">MANAGEMENT CONSOLE · 管理后台</div>
+    <div class="login-err" id="login-err"></div>
+    <div class="field">
+      <label>用户名</label>
+      <input id="login-username" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">登 录</button>
+    <div class="foot">SC · CHUAN GUIDE · INTERNAL</div>
+  </div>
+</div>
+
+<!-- 主应用 -->
+<div id="app-page" class="hidden">
+  <aside>
+    <div class="brand"><span class="seal">川</span><span class="t">四川省川剧院</span></div>
+    <nav>
+      <div class="nav-group">现场运营</div>
+      <a data-nav="live-shows"><span class="nav-icon">◉</span><span class="lbl">场次直播</span></a>
+      <a data-nav="rtc"><span class="nav-icon">⇄</span><span class="lbl">实时翻译</span></a>
+      <a data-nav="reservations"><span class="nav-icon">◆</span><span class="lbl">预约管理</span></a>
+      <div class="nav-group">内容资产</div>
+      <a data-nav="programs" class="active"><span class="nav-icon">▦</span><span class="lbl">节目管理</span></a>
+      <a data-nav="knowledge"><span class="nav-icon">☰</span><span class="lbl">知识管理</span></a>
+      <a data-nav="voices"><span class="nav-icon">♪</span><span class="lbl">音色管理</span></a>
+      <a data-nav="products"><span class="nav-icon">▩</span><span class="lbl">商品管理</span></a>
+      <div class="nav-group">运营与账号</div>
+      <a data-nav="stats"><span class="nav-icon">▤</span><span class="lbl">运营统计</span></a>
+      <a data-nav="earphones"><span class="nav-icon">◎</span><span class="lbl">耳机管理</span></a>
+      <a data-nav="users" data-role="super"><span class="nav-icon">☾</span><span class="lbl">账号管理</span></a>
+      <a data-nav="logout" class="nav-logout"><span class="nav-icon">⏻</span><span class="lbl">退出登录</span></a>
+    </nav>
+  </aside>
+  <main>
+    <header class="top">
+      <div><div class="k" id="page-k">PROGRAMS · 内容运营</div><h2 id="page-title">节目管理</h2></div>
+      <div id="header-actions"></div>
+    </header>
+    <div id="page-content"></div>
+  </main>
+</div>
+
+<!-- 节目编辑弹窗 -->
+<div id="program-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="program-modal-title">新增节目</h3>
+    <div class="form-grid">
+      <div class="full"><label>节目标题 *</label><input id="p-title"></div>
+      <div class="full"><label>副标题</label><input id="p-subtitle"></div>
+      <div><label>内容类型</label>
+        <select id="p-type">
+          <option value="full">文本 + 语音</option>
+          <option value="voice">语音</option>
+          <option value="text">文本</option>
+        </select>
+      </div>
+      <div><label>音频地址(URL)</label><input id="p-audio"></div>
+      <div><label>讲解人</label><input id="p-narrator"></div>
+      <div><label>场馆</label><input id="p-venue"></div>
+      <div><label>时长(分钟)</label><input id="p-duration" type="number" min="0"></div>
+      <div><label>价格(元)</label><input id="p-price" type="number" min="0" step="0.01"></div>
+      <div class="full"><label>一句话简介(中文 · 外国观众首页可见)</label><input id="p-intro-zh" maxlength="128"></div>
+      <div class="full"><label>一句话简介(英文 · One-line intro in English)</label><input id="p-intro-en" maxlength="200"></div>
+      <div class="full"><label>讲解正文(文本内容)</label><textarea id="p-text"></textarea></div>
+      <div class="full"><label>语音讲解文本</label><textarea id="p-voice"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('program-modal')">取消</button>
+      <button class="btn" onclick="saveProgram()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 耳机编辑弹窗 -->
+<div id="earphone-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="earphone-modal-title">新增耳机</h3>
+    <div class="form-grid">
+      <div><label>二维码ID *</label><input id="e-qr"></div>
+      <div><label>名称</label><input id="e-name"></div>
+      <div class="full"><label>蓝牙设备名</label><input id="e-device"></div>
+      <div class="full"><label>厂商数据序列号(可选,用于强校验)</label><input id="e-serial"></div>
+      <div><label>状态</label>
+        <select id="e-status">
+          <option value="available">可出租</option>
+          <option value="rented">已出租</option>
+          <option value="offline">停用</option>
+        </select>
+      </div>
+      <div><label>绑定节目标题</label><input id="e-bound"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('earphone-modal')">取消</button>
+      <button class="btn" onclick="saveEarphone()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 场次直播编辑弹窗 -->
+<div id="live-show-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="live-show-modal-title">设置直播场次</h3>
+    <div class="form-grid">
+      <div class="full"><label>场次标题 *</label><input id="ls-title" maxlength="128" placeholder="如：折子戏专场讲解"></div>
+      <div><label>讲解/演出人</label><input id="ls-host" maxlength="64" placeholder="默认：讲解员"></div>
+      <div><label>开始时间 *</label><input id="ls-start" type="datetime-local"></div>
+      <div><label>时长（分钟）</label><input id="ls-duration" type="number" min="1" max="1440" value="60"></div>
+      <div class="full"><label>实时翻译语言（可多选）</label>
+        <select id="ls-langs" multiple size="6">
+          <option value="en" selected>English</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="ru">Русский</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-foot" style="font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.7">
+      到达开始时间后自动开播：会场收音 → 语音识别 → 翻译 → 实时推送给进入该场次收听席的观众；到时自动收播。
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('live-show-modal')">取消</button>
+      <button class="btn" onclick="saveLiveShow()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 预录音频推流弹窗（临时通知 / 备用音源） -->
+<div id="broadcast-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3>推流预录音频</h3>
+    <div class="form-grid">
+      <div class="full"><label>音频文件（MP3 / WAV / M4A，≤8 分钟）</label><input id="bc-file" type="file" accept="audio/*"></div>
+      <div class="full"><label>通知文案（可选，随音频推送到观众字幕）</label><input id="bc-notice" maxlength="500" placeholder="如：各位来宾请注意，演出将于 10 分钟后开始"></div>
+    </div>
+    <div class="form-foot" style="font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.7">
+      推流期间<b>现场收音暂停</b>（观众只听到该音频，字幕不再误识别），推完自动恢复收音；可中途停止。音频在浏览器本地转码为直播原声格式（16kHz 单声道）后上传。
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('broadcast-modal')">取消</button>
+      <button class="btn danger" onclick="stopBroadcast()">停止推流</button>
+      <button class="btn" id="bc-start-btn" onclick="startBroadcast()">开始推流</button>
+    </div>
+  </div>
+</div>
+
+<!-- 实时翻译会话创建弹窗 -->
+<div id="rtc-session-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3>新建实时翻译会话</h3>
+    <div class="form-grid">
+      <div class="full"><label>会话标题 *</label><input id="rtc-title" maxlength="128" placeholder="如：张女士一行 · 馆内陪同"></div>
+      <div><label>游客语言</label>
+        <select id="rtc-visitor-lang">
+          <option value="en" selected>English</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="ru">Русский</option>
+        </select>
+      </div>
+      <div><label>工作人员语言</label>
+        <select id="rtc-staff-lang">
+          <option value="zh-CN" selected>中文（普通话）</option>
+        </select>
+      </div>
+      <div><label>记录留存（天）</label><input id="rtc-retention" type="number" min="1" max="365" value="30"></div>
+    </div>
+    <div class="form-foot" style="font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.7">
+      创建后生成游客/工作人员两个接入二维码：双方扫码进入同一会话，按住「说」按钮对讲，翻译字幕与译文语音实时互达。
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('rtc-session-modal')">取消</button>
+      <button class="btn" onclick="createRtcSession()">创建会话</button>
+    </div>
+  </div>
+</div>
+
+<!-- 实时翻译会话二维码弹窗 -->
+<div id="rtc-qr-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="rtc-qr-title">会话二维码</h3>
+    <div class="form-grid">
+      <div><label style="text-align:center">游客端（扫码进入）</label><div id="rtc-qr-visitor" style="text-align:center;padding:8px"></div></div>
+      <div><label style="text-align:center">工作人员端（扫码进入）</label><div id="rtc-qr-staff" style="text-align:center;padding:8px"></div></div>
+      <div class="full" style="font-size:12px;color:var(--text-muted);word-break:break-all">
+        <div>游客：<span id="rtc-url-visitor"></span></div>
+        <div style="margin-top:4px">工作：<span id="rtc-url-staff"></span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('rtc-qr-modal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 知识节点编辑弹窗 -->
+<div id="kn-node-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="kn-node-modal-title">新增知识节点</h3>
+    <div class="form-grid">
+      <div><label>节点码 *（如 gate/stage）</label><input id="kn-node-code" maxlength="32"></div>
+      <div><label>中文名 *</label><input id="kn-node-zh" maxlength="64"></div>
+      <div><label>英文名</label><input id="kn-node-en" maxlength="64"></div>
+      <div><label>排序</label><input id="kn-node-sort" type="number" min="0" value="0"></div>
+      <div class="full"><label>说明</label><input id="kn-node-desc" maxlength="255"></div>
+      <div><label>启用</label><select id="kn-node-active"><option value="1" selected>启用</option><option value="0">停用</option></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('kn-node-modal')">取消</button>
+      <button class="btn" onclick="saveKnNode()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 知识单元编辑弹窗 -->
+<div id="kn-unit-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="kn-unit-modal-title">新增知识单元</h3>
+    <div class="form-grid">
+      <div><label>所属节点 *</label><select id="kn-unit-node"></select></div>
+      <div><label>抽检状态</label><select id="kn-unit-review"><option value="draft" selected>待抽检</option><option value="checked">已抽检</option></select></div>
+      <div class="full"><label>标题 *</label><input id="kn-unit-title" maxlength="128"></div>
+      <div class="full"><label>关键词（逗号分隔，检索加权）</label><input id="kn-unit-kw" maxlength="255"></div>
+      <div class="full"><label>中文母稿 *（Agent 引用此内容作答）</label><textarea id="kn-unit-content"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('kn-unit-modal')">取消</button>
+      <button class="btn" onclick="saveKnUnit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 知识译文编辑弹窗 -->
+<div id="kn-tr-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="kn-tr-modal-title">译文管理</h3>
+    <div id="kn-tr-list" style="max-height:300px;overflow:auto"></div>
+    <div class="form-grid" style="margin-top:12px">
+      <div><label>语言</label>
+        <select id="kn-tr-lang">
+          <option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option>
+          <option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option>
+          <option value="ru">Русский</option>
+        </select>
+      </div>
+      <div><label>抽检状态</label><select id="kn-tr-review"><option value="draft" selected>待抽检</option><option value="checked">已抽检</option></select></div>
+      <div class="full"><label>译文内容（机翻预填后人工修订）</label><textarea id="kn-tr-content"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('kn-tr-modal')">关闭</button>
+      <button class="btn" onclick="saveKnTranslation()">保存译文</button>
+    </div>
+  </div>
+</div>
+
+<!-- 管理员账号编辑弹窗 -->
+<div id="user-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="user-modal-title">新增账号</h3>
+    <div class="form-grid">
+      <div><label>用户名 *</label><input id="u-username" maxlength="64"></div>
+      <div><label>显示名</label><input id="u-display" maxlength="64"></div>
+      <div><label id="u-pwd-label">初始密码 *（≥6 位）</label><input id="u-password" type="password" maxlength="128"></div>
+      <div><label>角色</label>
+        <select id="u-role">
+          <option value="ops" selected>运营（统计/直播/会话）</option>
+          <option value="content">内容（知识库）</option>
+          <option value="super">超级管理员</option>
+        </select>
+      </div>
+      <div><label>状态</label><select id="u-active"><option value="1" selected>启用</option><option value="0">禁用</option></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('user-modal')">取消</button>
+      <button class="btn" onclick="saveUser()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="product-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3 id="product-modal-title">新增商品</h3>
+    <div class="form-grid">
+      <div class="full"><label>商品名称 *</label><input id="pr-name" maxlength="128"></div>
+      <div class="full"><label>英文名称</label><input id="pr-name-en" maxlength="128"></div>
+      <div><label>分类</label>
+        <select id="pr-cat">
+          <option value="accessory">非遗饰品</option>
+          <option value="embroidery">蜀绣丝绸</option>
+          <option value="lacquer">手绘漆器</option>
+          <option value="bamboo">竹编文房</option>
+        </select>
+      </div>
+      <div><label>售价(元) *</label><input id="pr-price" type="number" min="0" step="0.01"></div>
+      <div><label>划线原价(元)</label><input id="pr-orig" type="number" min="0" step="0.01"></div>
+      <div><label>角标</label><input id="pr-badge" maxlength="32" placeholder="如：非遗工艺"></div>
+      <div><label>库存(留空=不限)</label><input id="pr-stock" type="number" min="0"></div>
+      <div><label>排序</label><input id="pr-sort" type="number"></div>
+      <div><label>状态</label>
+        <select id="pr-status"><option value="1">已上架</option><option value="0">已下架</option></select>
+      </div>
+      <div class="full"><label>中文描述</label><textarea id="pr-desc" rows="2"></textarea></div>
+      <div class="full"><label>英文描述</label><textarea id="pr-desc-en" rows="2"></textarea></div>
+      <div class="full"><label>商品图片</label>
+        <div style="display:flex;gap:12px;align-items:center">
+          <img id="pr-img" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+          <input id="pr-file" type="file" accept=".jpg,.jpeg,.png,.webp">
+          <button class="btn sm ghost" onclick="uploadProductImage()">上传</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeProductModal()">取消</button>
+      <button class="btn" onclick="saveProduct()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="./assets/qrcode.js"></script>
+<script>
+const API = '/api';
+let TOKEN = localStorage.getItem('admin_token') || '';
+let curNav = 'programs';
+let editId = { program: null, earphone: null, liveShow: null, product: null };
+
+// ---------- 通用 ----------
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+function authHeaders(){return {'Content-Type':'application/json',...(TOKEN?{'Authorization':'Bearer '+TOKEN}:{})}}
+async function api(path, method='GET', body){const r=await fetch(API+path,{method,headers:authHeaders(),body:body?JSON.stringify(body):undefined});
+  if(r.status===401){logout();throw new Error('登录已过期');}
+  const j=await r.json().catch(()=>({}));
+  if(j.code!==0 && j.code!==undefined && j.code!==200){throw new Error(j.message||'请求失败');}
+  if(j.code===404) throw new Error(j.message||'不存在');
+  return j;}
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ---------- 登录 ----------
+async function doLogin(){
+  const username=document.getElementById('login-username').value.trim();
+  const password=document.getElementById('login-password').value;
+  document.getElementById('login-err').textContent='';
+  try{
+    const j=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const r=await j.json();
+    if(!r.data || !r.data.access_token){document.getElementById('login-err').textContent=r.message||r.detail||'登录失败';return;}
+    TOKEN=r.data.access_token;localStorage.setItem('admin_token',TOKEN);
+    localStorage.setItem('admin_role',r.data.role||'super');
+    applyRoleNav();
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('app-page').classList.remove('hidden');
+    showNav('programs');
+  }catch(e){document.getElementById('login-err').textContent=e.message;}
+}
+function logout(){TOKEN='';localStorage.removeItem('admin_token');localStorage.removeItem('admin_role');document.getElementById('app-page').classList.add('hidden');document.getElementById('login-page').classList.remove('hidden');}
+
+// ---------- 角色可见性（报价单 #17）：content 不看运营统计，仅 super 看账号管理 ----------
+let ROLE = localStorage.getItem('admin_role') || 'super';
+function applyRoleNav(){
+  document.querySelectorAll('aside nav a[data-role]').forEach(a=>{
+    a.classList.toggle('hidden', ROLE!==a.dataset.role);
+  });
+}
+applyRoleNav();
+
+// ---------- 导航 ----------
+document.querySelectorAll('aside nav a').forEach(a=>a.addEventListener('click',()=>{
+  if(a.dataset.nav==='logout'){logout();return;}
+  showNav(a.dataset.nav);
+}));
+function showNav(nav){
+  curNav=nav;
+  document.querySelectorAll('aside nav a').forEach(a=>a.classList.toggle('active',a.dataset.nav===nav));
+  const titles={products:'商品管理',programs:'节目管理','live-shows':'场次直播',rtc:'实时翻译会话',stats:'运营统计',knowledge:'知识管理',users:'账号管理',reservations:'预约管理',earphones:'耳机管理',voices:'音色管理',products:'商品管理'};
+  document.getElementById('page-title').textContent=titles[nav];
+  const eyebrows={products:'SHOP · 文创商品',programs:'PROGRAMS · 内容运营','live-shows':'LIVE · 现场直播',rtc:'INTERPRET · 双语对讲',stats:'ANALYTICS · 用量与运营',knowledge:'KNOWLEDGE · 问答底座',users:'ACCOUNTS · 权限',reservations:'RESERVATIONS · 预约',earphones:'DEVICES · 租赁耳机',voices:'VOICES · 语音资产',products:'SHOP · 文创商品'};
+  document.getElementById('page-k').textContent=eyebrows[nav]||'CONSOLE';
+  if(nav==='programs')renderPrograms();else if(nav==='live-shows')renderLiveShows();
+  else if(nav==='rtc')renderRtc();
+  else if(nav==='stats')renderStats();
+  else if(nav==='knowledge')renderKnowledge();
+  else if(nav==='users')renderUsers();
+  else if(nav==='reservations')renderReservations();
+  else if(nav==='earphones')renderEarphones();else if(nav==='voices')renderVoices();
+  else if(nav==='products')renderProducts();
+}
+
+// ---------- 商品管理 ----------
+let prodList = [];
+function shopImgUrl(u) { return (u || '').startsWith('./') ? '/' + u.slice(2) : (u || ''); }
+const PR_CAT = { embroidery: '蜀绣丝绸', accessory: '非遗饰品', lacquer: '手绘漆器', bamboo: '竹编文房' };
+async function renderProducts(){
+  document.getElementById('header-actions').innerHTML = '<button class="btn" onclick="openProductModal()">+ 新增商品</button>';
+  const box = document.getElementById('page-content');
+  box.innerHTML = '<div class="empty">加载中...</div>';
+  try{
+    const j = await api('/admin/products');
+    prodList = j.data || [];
+    if(!prodList.length){ box.innerHTML = '<div class="empty">暂无商品，点右上角新增</div>'; return; }
+    box.innerHTML = `<div class="card"><table><tr><th>图</th><th>SKU</th><th>名称</th><th>分类</th><th>价格</th><th>排序</th><th>状态</th><th>操作</th></tr>
+      ${prodList.map(p => `<tr>
+        <td><img src="${esc(shopImgUrl(p.image_url))}" style="width:44px;height:44px;object-fit:cover;border-radius:8px" onerror="this.style.visibility='hidden'"></td>
+        <td><small>${esc(p.sku)}</small></td>
+        <td><b>${esc(p.name)}</b>${p.name_en ? `<br><small style="color:var(--muted)">${esc(p.name_en)}</small>` : ''}</td>
+        <td>${PR_CAT[p.category] || p.category}</td>
+        <td>¥${(p.price_cents/100).toFixed(p.price_cents % 100 ? 2 : 0)}${p.orig_price_cents ? ` <small style="color:var(--muted);text-decoration:line-through">¥${(p.orig_price_cents/100).toFixed(2)}</small>` : ''}</td>
+        <td>${p.sort}</td>
+        <td><span class="badge ${p.status === 1 ? 'on' : 'off'}">${p.status === 1 ? '已上架' : '已下架'}</span></td>
+        <td><div class="actions">
+          <button class="btn sm ghost" onclick="openProductModal(${p.id})">编辑</button>
+          <button class="btn sm ghost" onclick="toggleProduct(${p.id})">${p.status === 1 ? '下架' : '上架'}</button>
+        </div></td></tr>`).join('')}</table></div>`;
+  }catch(e){ box.innerHTML = `<div class="empty">${e.message}</div>`; }
+}
+function openProductModal(id){
+  editId.product = id || null;
+  document.getElementById('product-modal-title').textContent = id ? '编辑商品' : '新增商品';
+  ['pr-name','pr-name-en','pr-price','pr-orig','pr-badge','pr-stock','pr-sort','pr-desc','pr-desc-en'].forEach(n => document.getElementById(n).value = '');
+  document.getElementById('pr-img').style.visibility = 'hidden';
+  document.getElementById('pr-file').value = '';
+  if(id){
+    const p = prodList.find(x => x.id === id);
+    if(p){
+      document.getElementById('pr-name').value = p.name;
+      document.getElementById('pr-name-en').value = p.name_en || '';
+      document.getElementById('pr-cat').value = p.category;
+      document.getElementById('pr-price').value = (p.price_cents / 100).toFixed(2);
+      document.getElementById('pr-orig').value = p.orig_price_cents != null ? (p.orig_price_cents / 100).toFixed(2) : '';
+      document.getElementById('pr-badge').value = p.badge || '';
+      document.getElementById('pr-stock').value = p.stock != null ? p.stock : '';
+      document.getElementById('pr-sort').value = p.sort;
+      document.getElementById('pr-status').value = String(p.status);
+      document.getElementById('pr-desc').value = p.description || '';
+      document.getElementById('pr-desc-en').value = p.description_en || '';
+      const img = document.getElementById('pr-img');
+      if(p.image_url){ img.src = shopImgUrl(p.image_url); img.style.visibility = 'visible'; }
+    }
+  }
+  document.getElementById('product-modal').classList.remove('hidden');
+}
+function closeProductModal(){ document.getElementById('product-modal').classList.add('hidden'); }
+async function saveProduct(){
+  const price = Math.round(parseFloat(document.getElementById('pr-price').value || '0') * 100);
+  if(!document.getElementById('pr-name').value.trim() || !(price >= 0)) { toast('名称与售价必填'); return; }
+  const orig = parseFloat(document.getElementById('pr-orig').value);
+  const stock = document.getElementById('pr-stock').value;
+  const body = {
+    name: document.getElementById('pr-name').value.trim(),
+    name_en: document.getElementById('pr-name-en').value.trim(),
+    category: document.getElementById('pr-cat').value,
+    price_cents: price,
+    orig_price_cents: isNaN(orig) ? null : Math.round(orig * 100),
+    badge: document.getElementById('pr-badge').value.trim(),
+    stock: stock === '' ? null : parseInt(stock, 10),
+    sort: parseInt(document.getElementById('pr-sort').value || '0', 10),
+    status: parseInt(document.getElementById('pr-status').value, 10),
+    description: document.getElementById('pr-desc').value,
+    description_en: document.getElementById('pr-desc-en').value,
+  };
+  try{
+    if(editId.product){ await api('/admin/products/' + editId.product, 'PUT', body); }
+    else { await api('/admin/products', 'POST', body); }
+    closeProductModal();
+    toast('已保存');
+    renderProducts();
+  }catch(e){ toast(e.message); }
+}
+async function toggleProduct(id){
+  const p = prodList.find(x => x.id === id);
+  if(!p) return;
+  try{ await api('/admin/products/' + id, 'PUT', { status: p.status === 1 ? 0 : 1 }); renderProducts(); }
+  catch(e){ toast(e.message); }
+}
+async function uploadProductImage(){
+  const id = editId.product;
+  if(!id){ toast('请先保存商品后再上传图片'); return; }
+  const f = document.getElementById('pr-file').files[0];
+  if(!f){ toast('请选择图片文件'); return; }
+  const fd = new FormData(); fd.append('file', f);
+  try{
+    const r = await fetch(API + '/admin/products/' + id + '/image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN }, body: fd });
+    const j = await r.json();
+    if(j.data && j.data.image_url){
+      const img = document.getElementById('pr-img');
+      img.src = shopImgUrl(j.data.image_url) + '?t=' + Date.now(); img.style.visibility = 'visible';
+      const p = prodList.find(x => x.id === id); if(p) p.image_url = j.data.image_url;
+      toast('图片已更新');
+    } else { toast(j.detail || '上传失败'); }
+  }catch(e){ toast('上传失败'); }
+}
+
+// ---------- 节目 ----------
+let progList=[];
+async function renderPrograms(){
+  const nav=document.getElementById('header-actions');
+  nav.innerHTML='<button class="btn" onclick="openProgramModal()">+ 新增节目</button>';
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const j=await api('/programs?page=1&page_size=100');
+    progList=j.data.items;
+    if(!progList.length){box.innerHTML='<div class="empty">暂无节目</div>';return;}
+    box.innerHTML=`<div class="card"><table><tr><th>排序</th><th>标题</th><th>类型</th><th>讲解人</th><th>价格</th><th>状态</th><th>操作</th></tr>
+      ${progList.map(p=>`<tr>
+        <td>${p.sort_order}</td><td><b>${esc(p.title)}</b><br><small style="color:var(--muted)">${esc(p.subtitle)}</small></td>
+        <td>${p.content_type==='full'?'文本+语音':(p.content_type==='voice'?'语音':'文本')}</td><td>${esc(p.narrator)}</td>
+        <td>¥${p.price}</td>
+        <td><span class="badge ${p.is_online?'on':'off'}">${p.is_online?'已上架':'已下架'}</span></td>
+        <td><div class="actions">
+          <button class="btn sm ghost" onclick="openProgramModal(${p.id})">编辑</button>
+          <button class="btn sm ghost" onclick="toggleProgram(${p.id})">${p.is_online?'下架':'上架'}</button>
+          <button class="btn sm danger" onclick="delProgram(${p.id})">删除</button>
+        </div></td></tr>`).join('')}</table></div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+function openProgramModal(id){
+  editId.program=id||null;
+  document.getElementById('program-modal-title').textContent=id?'编辑节目':'新增节目';
+  ['p-title','p-subtitle','p-type','p-audio','p-narrator','p-venue','p-duration','p-price','p-intro-zh','p-intro-en','p-text','p-voice'].forEach(n=>document.getElementById(n).value='');
+  if(id){const p=progList.find(x=>x.id===id);if(p){
+    document.getElementById('p-title').value=p.title;document.getElementById('p-subtitle').value=p.subtitle;
+    document.getElementById('p-type').value=p.content_type;document.getElementById('p-audio').value=p.audio_url;
+    document.getElementById('p-narrator').value=p.narrator;document.getElementById('p-venue').value=p.venue;
+    document.getElementById('p-duration').value=p.duration_min;document.getElementById('p-price').value=p.price;
+    document.getElementById('p-intro-zh').value=p.intro_zh||'';document.getElementById('p-intro-en').value=p.intro_en||'';
+    document.getElementById('p-text').value=p.text_content;document.getElementById('p-voice').value=p.voice_content;
+  }}
+  document.getElementById('program-modal').classList.remove('hidden');
+}
+async function saveProgram(){
+  const body={
+    title:document.getElementById('p-title').value.trim(),
+    subtitle:document.getElementById('p-subtitle').value.trim(),
+    content_type:document.getElementById('p-type').value,
+    audio_url:document.getElementById('p-audio').value.trim(),
+    narrator:document.getElementById('p-narrator').value.trim(),
+    venue:document.getElementById('p-venue').value.trim(),
+    duration_min:+document.getElementById('p-duration').value||0,
+    price:+document.getElementById('p-price').value||0,
+    intro_zh:document.getElementById('p-intro-zh').value.trim()||null,
+    intro_en:document.getElementById('p-intro-en').value.trim()||null,
+    text_content:document.getElementById('p-text').value,
+    voice_content:document.getElementById('p-voice').value,
+    is_online:editId.program?((progList.find(x=>x.id===editId.program)||{}).is_online??true):true, // 编辑继承原状态，避免隐式重新上架
+  };
+  if(!body.title){toast('请填写节目标题');return;}
+  try{
+    if(editId.program){await api('/programs/'+editId.program,'PUT',body);toast('已更新');}
+    else{await api('/programs','POST',body);toast('已新增');}
+    closeModal('program-modal');renderPrograms();
+  }catch(e){toast(e.message);}
+}
+async function toggleProgram(id){
+  const p=progList.find(x=>x.id===id);
+  try{await api('/programs/'+id,'PUT',{is_online:!p.is_online});toast(p.is_online?'已下架':'已上架');renderPrograms();}
+  catch(e){toast(e.message);}
+}
+async function delProgram(id){
+  if(!confirm('确定删除该节目？'))return;
+  try{await api('/programs/'+id,'DELETE');toast('已删除');renderPrograms();}catch(e){toast(e.message);}
+}
+
+// ---------- 耳机 ----------
+let ehList=[];
+async function renderEarphones(){
+  document.getElementById('header-actions').innerHTML='<button class="btn" onclick="openEarphoneModal()">+ 新增耳机</button>';
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const j=await api('/earphones?page=1&page_size=100');
+    ehList=j.data.items;
+    if(!ehList.length){box.innerHTML='<div class="empty">暂无耳机</div>';return;}
+    const st={available:['av','可出租'],rented:['ren','已出租'],offline:['offline','停用']};
+    box.innerHTML=`<div class="card"><table><tr><th>二维码ID</th><th>名称</th><th>蓝牙设备名</th><th>序列号</th><th>状态</th><th>绑定节目</th><th>操作</th></tr>
+      ${ehList.map(e=>`<tr>
+        <td><b>${esc(e.qr_code_id)}</b></td><td>${esc(e.name)}</td><td>${esc(e.device_name)}</td><td>${esc(e.serial_number)}</td>
+        <td><span class="badge ${st[e.status][0]}">${st[e.status][1]}</span></td><td>${esc(e.bound_program_title)}</td>
+        <td><div class="actions">
+          <button class="btn sm ghost" onclick="openEarphoneModal(${e.id})">编辑</button>
+          <button class="btn sm danger" onclick="delEarphone(${e.id})">删除</button>
+        </div></td></tr>`).join('')}</table></div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+function openEarphoneModal(id){
+  editId.earphone=id||null;
+  document.getElementById('earphone-modal-title').textContent=id?'编辑耳机':'新增耳机';
+  ['e-qr','e-name','e-device','e-serial','e-status','e-bound'].forEach(n=>document.getElementById(n).value='');
+  if(id){const e=ehList.find(x=>x.id===id);if(e){
+    document.getElementById('e-qr').value=e.qr_code_id;document.getElementById('e-name').value=e.name;
+    document.getElementById('e-device').value=e.device_name;document.getElementById('e-serial').value=e.serial_number;
+    document.getElementById('e-status').value=e.status;document.getElementById('e-bound').value=e.bound_program_title;
+  }}
+  document.getElementById('earphone-modal').classList.remove('hidden');
+}
+async function saveEarphone(){
+  const qr=document.getElementById('e-qr').value.trim();
+  if(!qr){toast('请填写二维码ID');return;}
+  const body={
+    qr_code_id:qr,name:document.getElementById('e-name').value.trim(),
+    device_name:document.getElementById('e-device').value.trim(),
+    serial_number:document.getElementById('e-serial').value.trim(),
+    status:document.getElementById('e-status').value,
+    bound_program_title:document.getElementById('e-bound').value.trim(),
+  };
+  try{
+    if(editId.earphone){
+      const {qr_code_id,...rest}=body;
+      await api('/earphones/'+editId.earphone,'PUT',rest);toast('已更新');
+    }else{await api('/earphones','POST',body);toast('已新增');}
+    closeModal('earphone-modal');renderEarphones();
+  }catch(e){toast(e.message);}
+}
+async function delEarphone(id){
+  if(!confirm('确定删除该耳机？'))return;
+  try{await api('/earphones/'+id,'DELETE');toast('已删除');renderEarphones();}catch(e){toast(e.message);}
+}
+
+// ---------- 音色管理（豆包在线音色，只读） ----------
+async function renderVoices(){
+  document.getElementById('header-actions').innerHTML='';
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const j=await api('/tts/voices');
+    const list=Array.isArray(j)?j:(j.data||[]);
+    if(!list.length){box.innerHTML='<div class="empty">暂无可用音色</div>';return;}
+    const langNames={zh:'中文',en:'英文',ja:'日文',ko:'韩文',yue:'粤语'};
+    const genderNames={female:'女声',male:'男声'};
+    box.innerHTML=`<div class="card"><table><tr><th>音色ID</th><th>名称</th><th>语言</th><th>性别</th></tr>
+      ${list.map(v=>`<tr><td>${esc(v.id)}</td><td>${esc(v.name)}</td><td>${esc(langNames[v.lang]||v.lang||'-')}</td><td>${esc(genderNames[v.gender]||v.gender||'-')}</td></tr>`).join('')}</table></div>
+      <div class="empty" style="padding:16px 0;font-size:12px">豆包在线音色由服务商内置，不支持新增、编辑或删除。</div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+
+// ---------- 场次直播 ----------
+let liveShowList=[];
+let liveShowTimer=null;
+async function renderLiveShows(){
+  const nav=document.getElementById('header-actions');
+  nav.innerHTML='<button class="btn" onclick="openLiveShowModal()">+ 设置场次</button>';
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const j=await api('/live/shows');
+    liveShowList=j.data;
+    // 直播中场次每 10s 刷新在线人数/字幕数
+    clearInterval(liveShowTimer);
+    if(liveShowList.some(s=>s.status==='live')){
+      liveShowTimer=setInterval(()=>{if(curNav==='live-shows')renderLiveShows();},10000);
+    }
+    if(!liveShowList.length){box.innerHTML='<div class="empty">暂无排期中的场次</div>';return;}
+    const statusBadge=s=>s.status==='live'
+      ?'<span class="badge livebadge">● 直播中</span>'
+      :(s.status==='ended'?'<span class="badge off">已结束</span>':'<span class="badge pending">待开播</span>');
+    box.innerHTML=`<div class="card"><table><tr><th>场次</th><th>开始时间</th><th>时长</th><th>翻译语言</th><th>状态</th><th>收听</th><th>操作</th></tr>
+      ${liveShowList.map(s=>{
+        const start=new Date(s.start_at);
+        const startText=`${start.toLocaleDateString('zh-CN')}<br><small style="color:var(--muted)">${start.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</small>`;
+        const listenText=s.status==='live'
+          ?`${s.listeners} 人在线<br><small style="color:var(--muted)">${s.captions} 条字幕</small>`:'—';
+        const actions=s.status==='live'
+          ?`<button class="btn sm danger" onclick="stopLiveShow(${s.id})">收播</button>
+            <button class="btn sm" onclick="openBroadcastModal(${s.id})">推流音频</button>
+            <button class="btn sm ghost" onclick="copyListenLink('${s.session_code}')">收听链接</button>`
+          :(s.status==='scheduled'
+          ?`<button class="btn sm" onclick="startLiveShow(${s.id})">立即开播</button>
+            <button class="btn sm ghost" onclick="openLiveShowModal(${s.id})">编辑</button>
+            <button class="btn sm danger" onclick="delLiveShow(${s.id})">删除</button>`
+          :'<button class="btn sm danger" onclick="delLiveShow(${s.id})">删除</button>');
+        return `<tr>
+          <td><b>${esc(s.title)}</b><br><small style="color:var(--muted)">${esc(s.host_name)}${s.session_code?' · 码 '+s.session_code:''}</small></td>
+          <td>${startText}</td>
+          <td>${s.duration_min} 分钟</td>
+          <td>${s.target_langs.join(' / ').toUpperCase()}</td>
+          <td>${statusBadge(s)}</td>
+          <td>${listenText}</td>
+          <td><div class="actions">${actions}</div></td></tr>`;
+      }).join('')}</table></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.8">
+        场次到点<b>自动开播</b>：会场收音 → 语音识别 → 多语言翻译 → 实时推送至收听席观众；时长结束自动收播。观众入口：<a href="/index.html?view=livelisten" target="_blank">/index.html?view=livelisten</a></div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+function openLiveShowModal(id){
+  editId.liveShow=id||null;
+  document.getElementById('live-show-modal-title').textContent=id?'编辑场次':'设置直播场次';
+  const now=new Date(Date.now()+10*60000); // 默认 10 分钟后开播
+  document.getElementById('ls-title').value='';
+  document.getElementById('ls-host').value='';
+  document.getElementById('ls-start').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}T${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('ls-duration').value=60;
+  [...document.getElementById('ls-langs').options].forEach(o=>o.selected=o.value==='en');
+  if(id){const s=liveShowList.find(x=>x.id===id);if(s){
+    document.getElementById('ls-title').value=s.title;
+    document.getElementById('ls-host').value=s.host_name;
+    const d=new Date(s.start_at);
+    document.getElementById('ls-start').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    document.getElementById('ls-duration').value=s.duration_min;
+    [...document.getElementById('ls-langs').options].forEach(o=>o.selected=s.target_langs.includes(o.value));
+  }}
+  document.getElementById('live-show-modal').classList.remove('hidden');
+}
+async function saveLiveShow(){
+  const langs=[...document.getElementById('ls-langs').selectedOptions].map(o=>o.value);
+  const body={
+    title:document.getElementById('ls-title').value.trim(),
+    host_name:document.getElementById('ls-host').value.trim()||'讲解员',
+    start_at:document.getElementById('ls-start').value,
+    duration_min:+document.getElementById('ls-duration').value||60,
+    target_langs:langs.length?langs:['en'],
+  };
+  if(!body.title){toast('请填写场次标题');return;}
+  if(!body.start_at){toast('请选择开始时间');return;}
+  try{
+    if(editId.liveShow){await api('/live/shows/'+editId.liveShow,'PUT',body);toast('场次已更新');}
+    else{await api('/live/shows','POST',body);toast('场次已设置，到点自动开播');}
+    closeModal('live-show-modal');renderLiveShows();
+  }catch(e){toast(e.message);}
+}
+async function startLiveShow(id){
+  try{await api(`/live/shows/${id}/start`,'POST');toast('已开播，收音与推送自动进行');renderLiveShows();}
+  catch(e){toast(e.message);}
+}
+async function stopLiveShow(id){
+  if(!confirm('确定立即收播该场次？观众将收到结束通知。'))return;
+  try{await api(`/live/shows/${id}/stop`,'POST');toast('已收播');renderLiveShows();}
+  catch(e){toast(e.message);}
+}
+async function delLiveShow(id){
+  if(!confirm('确定删除该场次？'))return;
+  try{await api('/live/shows/'+id,'DELETE');toast('已删除');renderLiveShows();}catch(e){toast(e.message);}
+}
+async function copyListenLink(code){
+  const link=`${location.origin}/index.html?view=livelisten&code=${code}`;
+  try{await navigator.clipboard.writeText(link);toast('收听链接已复制：'+link);}
+  catch(e){toast('复制失败，请手动复制：'+link);}
+}
+
+// ---------- 实时翻译会话（双端扫码对讲） ----------
+let rtcList=[];
+async function renderRtc(){
+  document.getElementById('header-actions').innerHTML='<button class="btn" onclick="openRtcModal()">+ 新建会话</button>';
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const j=await api('/rtc/sessions');
+    rtcList=j.data||[];
+    if(!rtcList.length){box.innerHTML='<div class="empty">暂无会话，点击右上角「+ 新建会话」创建</div>';return;}
+    const stMap={created:['off','未接入'],active:['on','进行中'],ended:['off','已结束']};
+    const langNames={'zh-CN':'中文',en:'English',ja:'日本語',ko:'한국어',es:'Español',fr:'Français',de:'Deutsch',ru:'Русский'};
+    box.innerHTML=`<div class="card"><table><tr><th>会话码</th><th>标题</th><th>语言（游客⇄工作）</th><th>状态</th><th>字幕</th><th>创建时间</th><th>操作</th></tr>
+      ${rtcList.map(s=>{const st=stMap[s.status]||['off',s.status];return `<tr>
+        <td><b>${esc(s.code)}</b></td>
+        <td>${esc(s.title)}</td>
+        <td>${esc(langNames[s.visitor_lang]||s.visitor_lang)} ⇄ ${esc(langNames[s.staff_lang]||s.staff_lang)}</td>
+        <td><span class="badge ${st[0]}">${st[1]}</span></td>
+        <td>${s.log_count} 条</td>
+        <td><small style="color:var(--muted)">${s.created_at?new Date(s.created_at).toLocaleString('zh-CN'):'-'}</small></td>
+        <td><div class="actions">
+          ${s.status!=='ended'?`<button class="btn sm" onclick="openRtcQr(${s.id})">二维码</button>
+          <button class="btn sm danger" onclick="endRtcSession(${s.id})">结束</button>`:''}
+        </div></td></tr>`;}).join('')}</table></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.8">
+        双方扫码进入同一会话，按住「说」按钮对讲：游客听译文语音+字幕，工作人员端字幕对照。<b>WebRTC 需 HTTPS</b>（内网 http 仅限本机调试）。</div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+function openRtcModal(){
+  document.getElementById('rtc-title').value='';
+  document.getElementById('rtc-visitor-lang').value='en';
+  document.getElementById('rtc-staff-lang').value='zh-CN';
+  document.getElementById('rtc-retention').value=30;
+  document.getElementById('rtc-session-modal').classList.remove('hidden');
+}
+async function createRtcSession(){
+  const body={
+    title:document.getElementById('rtc-title').value.trim()||'实时翻译会话',
+    visitor_lang:document.getElementById('rtc-visitor-lang').value,
+    staff_lang:document.getElementById('rtc-staff-lang').value,
+    retention_days:+document.getElementById('rtc-retention').value||30,
+  };
+  try{
+    const j=await api('/rtc/sessions','POST',body);
+    closeModal('rtc-session-modal');
+    toast('会话已创建');
+    renderRtc().then(()=>openRtcQr(j.data.id));
+  }catch(e){toast(e.message);}
+}
+function makeQr(elId,url){
+  const qr=qrcode(0,'M');qr.addData(url);qr.make();
+  document.getElementById(elId).innerHTML=qr.createSvgTag({cellSize:4,margin:2,scalable:true});
+}
+function openRtcQr(id){
+  const s=rtcList.find(x=>x.id===id);if(!s)return;
+  document.getElementById('rtc-qr-title').textContent=`会话二维码「${s.title}」`;
+  const visitorUrl=`${location.origin}/${s.visitor_url}`;
+  const staffUrl=`${location.origin}/${s.staff_url}`;
+  makeQr('rtc-qr-visitor',visitorUrl);
+  makeQr('rtc-qr-staff',staffUrl);
+  document.getElementById('rtc-url-visitor').textContent=visitorUrl;
+  document.getElementById('rtc-url-staff').textContent=staffUrl;
+  document.getElementById('rtc-qr-modal').classList.remove('hidden');
+}
+async function endRtcSession(id){
+  if(!confirm('确定结束该会话？双端将收到结束通知并断开。'))return;
+  try{await api(`/rtc/sessions/${id}/end`,'POST');toast('会话已结束');renderRtc();}
+  catch(e){toast(e.message);}
+}
+
+// ---------- 运营统计（豆包用量 / Agent 会话记录） ----------
+async function renderStats(){
+  document.getElementById('header-actions').innerHTML=`<select id="st-month" onchange="renderStats()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border)"></select>`;
+  const now=new Date();
+  let opts='';
+  for(let i=0;i<6;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const v=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    opts+=`<option value="${v}" ${i===0?'selected':''}>${v}</option>`;
+  }
+  document.getElementById('st-month').innerHTML=opts;
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const [j,logs,agent]=await Promise.all([
+      api('/admin/stats?month='+document.getElementById('st-month').value),
+      api('/admin/usage-logs?limit=50'),
+      api('/admin/agent-sessions?limit=30'),
+    ]);
+    const d=j.data;
+    const usageHtml=d.usage.length
+      ?`<div class="card" style="display:flex;gap:24px;flex-wrap:wrap;padding:18px">${d.usage.map(u=>`
+        <div><div style="font-size:12px;color:var(--muted)">${esc(u.label)}（${u.unit||'-'}）</div>
+        <div style="font-size:26px;font-weight:700;color:var(--accent)">${u.quantity}</div></div>`).join('')}
+        <div><div style="font-size:12px;color:var(--muted)">伴游会话 / 消息</div>
+        <div style="font-size:26px;font-weight:700">${d.totals.agent_sessions} / ${d.totals.agent_messages}</div></div>
+        <div><div style="font-size:12px;color:var(--muted)">降级话术次数</div>
+        <div style="font-size:26px;font-weight:700;color:${d.totals.agent_degraded?'var(--danger)':'inherit'}">${d.totals.agent_degraded}</div></div></div>`
+      :'<div class="card" style="padding:18px">当月暂无豆包调用量（未配凭据或尚未使用）</div>';
+    const logHtml=logs.data.length?`<div class="card"><table><tr><th>时间</th><th>类型</th><th>用量</th><th>来源</th></tr>
+      ${logs.data.map(l=>`<tr><td><small>${new Date(l.created_at).toLocaleString('zh-CN')}</small></td>
+        <td>${esc(l.kind)}</td><td>${l.quantity} ${esc(l.unit||'')}</td><td><small>${esc(l.session_ref||'-')}</small></td></tr>`).join('')}</table></div>`
+      :'<div class="empty">暂无用量明细</div>';
+    const agentHtml=agent.data.length?`<div class="card"><table><tr><th>会话</th><th>语言</th><th>节点</th><th>消息数</th><th>最近活跃</th></tr>
+      ${agent.data.map(s=>`<tr><td><b>#${esc(s.token)}</b></td><td>${esc(s.lang)}</td><td>${esc(s.node_code||'-')}</td>
+        <td>${s.messages}</td><td><small>${new Date(s.last_active_at).toLocaleString('zh-CN')}</small></td></tr>`).join('')}</table></div>`
+      :'<div class="empty">暂无伴游会话</div>';
+    box.innerHTML=`<h3 style="margin:4px 0 10px">豆包月度用量</h3>${usageHtml}
+      <h3 style="margin:18px 0 10px">伴游会话记录</h3>${agentHtml}
+      <h3 style="margin:18px 0 10px">用量明细（最近 50 条）</h3>${logHtml}`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+
+// ---------- 知识管理（节点 / 单元 / 译文 / 试查 / 向量 / 验收） ----------
+let knNodes=[],knUnits=[],knNodeId=null,knUnitId=null,knTrUnitId=null;
+async function renderKnowledge(){
+  document.getElementById('header-actions').innerHTML=`
+    <button class="btn" onclick="openKnNodeModal()">+ 节点</button>
+    <button class="btn" onclick="openKnUnitModal()">+ 知识单元</button>
+    <button class="btn ghost" onclick="knEmbed()">生成向量</button>
+    <button class="btn ghost" onclick="knEval()">验收报告</button>`;
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const [nj,uj]=await Promise.all([api('/knowledge/nodes'),api('/knowledge/units?limit=300')]);
+    knNodes=nj.data;knUnits=uj.data;
+    const chips=knNodes.map(n=>`<span class="chip ${knNodeId===n.id?'on':''}" onclick="knFilterNode(${n.id})">${esc(n.name_zh)}（${n.unit_count}）</span>`).join('');
+    box.innerHTML=`
+      <div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <b style="font-size:13px;margin-right:6px">节点：</b>${chips}
+        <span class="chip ${knNodeId===null?'on':''}" onclick="knFilterNode(null)">全部</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="kn-q" placeholder="标题/内容搜索" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
+        <button class="btn sm ghost" onclick="knSearchUnits()">搜索单元</button>
+      </div></div>
+      <div class="card"><div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="kn-test-q" placeholder="试查：输入游客可能的问题，验证召回" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
+        <button class="btn sm" onclick="knTrySearch()">试查</button></div>
+        <div id="kn-test-result"></div></div>
+      <div id="kn-units-box"></div>`;
+    renderKnUnits(knUnits);
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+function knFilterNode(id){knNodeId=id;renderKnowledge();}
+function renderKnUnits(list){
+  const st={draft:['off','待抽检'],checked:['on','已抽检']};
+  document.getElementById('kn-units-box').innerHTML=list.length?`<div class="card"><table><tr><th>节点</th><th>标题</th><th>关键词</th><th>抽检</th><th>向量</th><th>操作</th></tr>
+    ${list.map(u=>`<tr><td>${esc(u.node_name)}</td><td><b>${esc(u.title)}</b><br><small style="color:var(--muted)">${esc(u.content_zh.slice(0,60))}…</small></td>
+      <td><small>${esc(u.keywords||'-')}</small></td>
+      <td><span class="badge ${(st[u.review_status]||st.draft)[0]}">${(st[u.review_status]||st.draft)[1]}</span></td>
+      <td>${u.has_vector?'✅':'—'}</td>
+      <td><div class="actions">
+        <button class="btn sm ghost" onclick="openKnUnitModal(${u.id})">编辑</button>
+        <button class="btn sm ghost" onclick="openKnTrModal(${u.id})">译文</button>
+        <button class="btn sm danger" onclick="delKnUnit(${u.id})">删除</button>
+      </div></td></tr>`).join('')}</table></div>`
+    :'<div class="empty">该节点暂无知识单元，点击右上角「+ 知识单元」添加</div>';
+}
+async function knSearchUnits(){
+  const q=document.getElementById('kn-q').value.trim();
+  const params=new URLSearchParams({limit:300});if(q)params.set('q',q);
+  if(knNodeId)params.set('node_id',knNodeId);
+  const j=await api('/knowledge/units?'+params);
+  renderKnUnits(j.data);
+}
+async function knTrySearch(){
+  const q=document.getElementById('kn-test-q').value.trim();
+  if(!q){toast('请输入试查问题');return;}
+  const box=document.getElementById('kn-test-result');
+  box.innerHTML='<div class="empty">检索中...</div>';
+  try{
+    const j=await api('/knowledge/search?q='+encodeURIComponent(q));
+    box.innerHTML=j.data.length?`<table style="margin-top:8px"><tr><th>得分</th><th>节点</th><th>标题</th><th>内容</th></tr>
+      ${j.data.map(r=>`<tr><td><b>${r.score.toFixed(4)}</b></td><td>${esc(r.node_name)}</td><td>${esc(r.title)}</td>
+        <td><small>${esc(r.content.slice(0,80))}</small></td></tr>`).join('')}</table>`
+      :'<div class="empty" style="padding:12px">未命中任何知识单元——检查分词/关键词，或先「生成向量」</div>';
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+async function knEmbed(){
+  try{const j=await api('/knowledge/embed','POST');toast(`向量生成完成：${j.data.embedded} 条${j.data.skipped?`（跳过 ${j.data.skipped}）`:''}`);renderKnowledge();}
+  catch(e){toast(e.message);}
+}
+async function knEval(){
+  const box=document.getElementById('kn-test-result');
+  box.innerHTML='<div class="empty">验收评测中...</div>';
+  try{
+    const j=await api('/knowledge/eval-report');
+    const d=j.data;
+    box.innerHTML=`<div style="margin-top:8px"><b>命中率 ${d.hit}/${d.total}（${(d.hit_rate*100).toFixed(1)}%）</b>${
+      d.misses.length?`<table style="margin-top:8px"><tr><th>未命中问题</th><th>期望单元</th><th>实际命中</th></tr>
+      ${d.misses.map(m=>`<tr><td>${esc(m.question)}</td><td>#${m.expect_unit_id}</td><td><small>${m.got.join(', ')||'无'}</small></td></tr>`).join('')}</table>`
+      :''}</div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+function openKnNodeModal(id){
+  const n=id?knNodes.find(x=>x.id===id):null;
+  document.getElementById('kn-node-modal-title').textContent=n?'编辑知识节点':'新增知识节点';
+  document.getElementById('kn-node-code').value=n?n.code:'';
+  document.getElementById('kn-node-zh').value=n?n.name_zh:'';
+  document.getElementById('kn-node-en').value=n?n.name_en:'';
+  document.getElementById('kn-node-desc').value=n?n.description:'';
+  document.getElementById('kn-node-sort').value=n?n.sort:0;
+  document.getElementById('kn-node-active').value=n?(n.is_active?1:0):1;
+  document.getElementById('kn-node-code').dataset.id=id||'';
+  document.getElementById('kn-node-modal').classList.remove('hidden');
+}
+async function saveKnNode(){
+  const body={
+    code:document.getElementById('kn-node-code').value.trim(),
+    name_zh:document.getElementById('kn-node-zh').value.trim(),
+    name_en:document.getElementById('kn-node-en').value.trim(),
+    description:document.getElementById('kn-node-desc').value.trim(),
+    sort:+document.getElementById('kn-node-sort').value||0,
+    is_active:document.getElementById('kn-node-active').value==='1',
+  };
+  if(!body.code||!body.name_zh){toast('请填写节点码与中文名');return;}
+  try{
+    const id=document.getElementById('kn-node-code').dataset.id;
+    if(id){await api('/knowledge/nodes/'+id,'PUT',body);}else{await api('/knowledge/nodes','POST',body);}
+    closeModal('kn-node-modal');renderKnowledge();
+  }catch(e){toast(e.message);}
+}
+function openKnUnitModal(id){
+  knUnitId=id||null;
+  document.getElementById('kn-unit-modal-title').textContent=id?'编辑知识单元':'新增知识单元';
+  document.getElementById('kn-unit-node').innerHTML=knNodes.map(n=>`<option value="${n.id}">${esc(n.name_zh)}</option>`).join('');
+  document.getElementById('kn-unit-title').value='';document.getElementById('kn-unit-kw').value='';
+  document.getElementById('kn-unit-content').value='';document.getElementById('kn-unit-review').value='draft';
+  if(id){const u=knUnits.find(x=>x.id===id);if(u){
+    document.getElementById('kn-unit-node').value=u.node_id;
+    document.getElementById('kn-unit-title').value=u.title;document.getElementById('kn-unit-kw').value=u.keywords;
+    document.getElementById('kn-unit-content').value=u.content_zh;document.getElementById('kn-unit-review').value=u.review_status;
+  }}
+  document.getElementById('kn-unit-modal').classList.remove('hidden');
+}
+async function saveKnUnit(){
+  const body={
+    node_id:+document.getElementById('kn-unit-node').value,
+    title:document.getElementById('kn-unit-title').value.trim(),
+    keywords:document.getElementById('kn-unit-kw').value.trim(),
+    content_zh:document.getElementById('kn-unit-content').value.trim(),
+    review_status:document.getElementById('kn-unit-review').value,
+  };
+  if(!body.title||!body.content_zh){toast('请填写标题与中文母稿');return;}
+  try{
+    if(knUnitId){await api('/knowledge/units/'+knUnitId,'PUT',body);toast('已更新（母稿变更需重新生成向量）');}
+    else{await api('/knowledge/units','POST',body);toast('已新增，记得「生成向量」');}
+    closeModal('kn-unit-modal');renderKnowledge();
+  }catch(e){toast(e.message);}
+}
+async function delKnUnit(id){
+  if(!confirm('确定删除该知识单元？其译文与向量将一并删除。'))return;
+  try{await api('/knowledge/units/'+id,'DELETE');toast('已删除');renderKnowledge();}catch(e){toast(e.message);}
+}
+async function openKnTrModal(unitId){
+  knTrUnitId=unitId;
+  const u=knUnits.find(x=>x.id===unitId);
+  document.getElementById('kn-tr-modal-title').textContent=`译文管理「${u?u.title:unitId}」`;
+  document.getElementById('kn-tr-content').value='';
+  try{
+    const j=await api(`/knowledge/units/${unitId}/translations`);
+    document.getElementById('kn-tr-list').innerHTML=j.data.length?`<table><tr><th>语言</th><th>内容</th><th>抽检</th><th></th></tr>
+      ${j.data.map(t=>`<tr><td><b>${esc(t.lang)}</b></td><td><small>${esc(t.content.slice(0,80))}</small></td>
+        <td><span class="badge ${t.review_status==='checked'?'on':'off'}">${t.review_status==='checked'?'已抽检':'待抽检'}</span></td>
+        <td><button class="btn sm ghost" onclick="knFillTr('${esc(t.lang)}',\`${t.content.replace(/`/g,'')}\`,'${t.review_status}')">载入</button></td></tr>`).join('')}</table>`
+      :'<div class="empty" style="padding:8px">暂无译文</div>';
+  }catch(e){document.getElementById('kn-tr-list').innerHTML=`<div class="empty">${e.message}</div>`;}
+  document.getElementById('kn-tr-modal').classList.remove('hidden');
+}
+function knFillTr(lang,content,review){
+  document.getElementById('kn-tr-lang').value=lang;
+  document.getElementById('kn-tr-content').value=content;
+  document.getElementById('kn-tr-review').value=review;
+}
+async function saveKnTranslation(){
+  const content=document.getElementById('kn-tr-content').value.trim();
+  if(!content){toast('请填写译文内容');return;}
+  try{
+    await api(`/knowledge/units/${knTrUnitId}/translations`,'PUT',{
+      unit_id:knTrUnitId,lang:document.getElementById('kn-tr-lang').value,
+      content,review_status:document.getElementById('kn-tr-review').value});
+    toast('译文已保存');openKnTrModal(knTrUnitId);
+  }catch(e){toast(e.message);}
+}
+
+// ---------- 账号管理（仅 super） ----------
+let userList=[];
+async function renderUsers(){
+  document.getElementById('header-actions').innerHTML='<button class="btn" onclick="openUserModal()">+ 新增账号</button>';
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  try{
+    const j=await api('/admin/users');
+    userList=j.data;
+    const roleNames={super:'超级管理员',ops:'运营',content:'内容'};
+    box.innerHTML=`<div class="card"><table><tr><th>用户名</th><th>显示名</th><th>角色</th><th>状态</th><th>操作</th></tr>
+      ${userList.map(u=>`<tr><td><b>${esc(u.username)}</b></td><td>${esc(u.display_name)}</td>
+        <td>${roleNames[u.role]||u.role}</td>
+        <td><span class="badge ${u.is_active?'on':'off'}">${u.is_active?'启用':'禁用'}</span></td>
+        <td><div class="actions"><button class="btn sm ghost" onclick="openUserModal(${u.id})">编辑</button></div></td></tr>`).join('')}</table></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.8">角色说明：运营=统计/直播/实时翻译会话；内容=知识库维护；超级管理员=全部（含账号管理）。</div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+function openUserModal(id){
+  const u=id?userList.find(x=>x.id===id):null;
+  document.getElementById('user-modal-title').textContent=u?'编辑账号':'新增账号';
+  document.getElementById('u-username').value=u?u.username:'';
+  document.getElementById('u-username').disabled=!!u;
+  document.getElementById('u-display').value=u?u.display_name:'';
+  document.getElementById('u-password').value='';
+  document.getElementById('u-pwd-label').textContent=u?'重置密码（留空不改）':'初始密码 *（≥6 位）';
+  document.getElementById('u-role').value=u?u.role:'ops';
+  document.getElementById('u-active').value=u?(u.is_active?1:0):1;
+  document.getElementById('u-username').dataset.id=id||'';
+  document.getElementById('user-modal').classList.remove('hidden');
+}
+async function saveUser(){
+  const id=document.getElementById('u-username').dataset.id;
+  try{
+    if(id){
+      const body={};
+      const dn=document.getElementById('u-display').value.trim();
+      const pwd=document.getElementById('u-password').value;
+      if(dn)body.display_name=dn;
+      if(pwd){if(pwd.length<6){toast('密码至少 6 位');return;}body.password=pwd;}
+      body.role=document.getElementById('u-role').value;
+      body.is_active=document.getElementById('u-active').value==='1';
+      await api('/admin/users/'+id,'PUT',body);
+    }else{
+      const body={
+        username:document.getElementById('u-username').value.trim(),
+        password:document.getElementById('u-password').value,
+        display_name:document.getElementById('u-display').value.trim(),
+        role:document.getElementById('u-role').value,
+      };
+      if(!body.username||body.password.length<6){toast('请填写用户名与 ≥6 位密码');return;}
+      await api('/admin/users','POST',body);
+    }
+    toast('已保存');closeModal('user-modal');renderUsers();
+  }catch(e){toast(e.message);}
+}
+
+// ---------- 场次直播：预录音频推流 ----------
+let bcShowId=null;
+function openBroadcastModal(id){
+  bcShowId=id;
+  const s=liveShowList.find(x=>x.id===id);
+  document.getElementById('bc-file').value='';
+  document.getElementById('bc-notice').value='';
+  document.querySelector('#broadcast-modal h3').textContent=s?`推流预录音频「${s.title}」`:'推流预录音频';
+  document.getElementById('broadcast-modal').classList.remove('hidden');
+}
+async function startBroadcast(){
+  const f=document.getElementById('bc-file').files[0];
+  if(!f){toast('请选择音频文件');return;}
+  const btn=document.getElementById('bc-start-btn');
+  btn.disabled=true;
+  try{
+    btn.textContent='转码中...';
+    const pcmB64=await decodeToPcm16k(f);
+    btn.textContent='上传推流中...';
+    await api(`/live/shows/${bcShowId}/broadcast`,'POST',{pcm_b64:pcmB64,notice:document.getElementById('bc-notice').value.trim()||null});
+    toast('推流已开始，观众正在收听');
+    closeModal('broadcast-modal');
+  }catch(e){toast(e.message||'推流失败');}
+  btn.disabled=false;btn.textContent='开始推流';
+}
+async function stopBroadcast(){
+  try{await api(`/live/shows/${bcShowId}/broadcast/stop`,'POST');toast('已停止推流，现场收音恢复');closeModal('broadcast-modal');}
+  catch(e){toast(e.message);}
+}
+/* 浏览器本地把任意音频文件解码重采样为直播原声格式（PCM16LE/单声道/16kHz）并 base64 */
+async function decodeToPcm16k(file){
+  const buf=await file.arrayBuffer();
+  const actx=new (window.AudioContext||window.webkitAudioContext)();
+  let audio;
+  try{audio=await actx.decodeAudioData(buf);}finally{actx.close().catch(()=>{});}
+  const rate=16000;
+  const len=Math.max(1,Math.ceil(audio.duration*rate));
+  const off=new OfflineAudioContext(1,len,rate);
+  const mono=off.createBuffer(1,audio.length,audio.sampleRate); // 多声道混合为单声道
+  const md=mono.getChannelData(0);
+  const n=audio.numberOfChannels;
+  for(let ch=0;ch<n;ch++){const d=audio.getChannelData(ch);for(let i=0;i<d.length;i++)md[i]+=d[i]/n;}
+  const src=off.createBufferSource();src.buffer=mono;src.connect(off.destination);src.start();
+  const rendered=await off.startRendering();
+  const data=rendered.getChannelData(0);
+  const pcm=new Int16Array(data.length);
+  for(let i=0;i<data.length;i++){const s=Math.max(-1,Math.min(1,data[i]));pcm[i]=s<0?s*0x8000:s*0x7FFF;}
+  const bytes=new Uint8Array(pcm.buffer);
+  let bin='';
+  for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+  return btoa(bin);
+}
+
+// ---------- 预约 ----------
+async function renderReservations(){
+  document.getElementById('header-actions').innerHTML=`
+    <div class="status-filter">
+      <select id="res-filter" onchange="renderReservations()">
+        <option value="">全部状态</option>
+        <option value="pending">待确认</option>
+        <option value="confirmed">已确认</option>
+        <option value="completed">已完成</option>
+        <option value="cancelled">已取消</option>
+      </select>
+    </div>`;
+  const box=document.getElementById('page-content');
+  box.innerHTML='<div class="empty">加载中...</div>';
+  const stFilter=document.getElementById('res-filter')?document.getElementById('res-filter').value:'';
+  try{
+    const j=await api(`/reservations?page=1&page_size=100&status=${encodeURIComponent(stFilter)}`);
+    const list=j.data.items;
+    if(!list.length){box.innerHTML='<div class="empty">暂无预约</div>';return;}
+    const st={pending:['pending','待确认'],confirmed:['confirmed','已确认'],completed:['completed','已完成'],cancelled:['cancelled','已取消']};
+    box.innerHTML=`<div class="card"><table><tr><th>ID</th><th>耳机</th><th>节目标题</th><th>类型</th><th>客户</th><th>联系方式</th><th>预约时间</th><th>状态</th><th>操作</th></tr>
+      ${list.map(r=>`<tr>
+        <td>${r.id}</td><td>${esc(r.qr_code_id)}</td><td>${esc(r.program_title)}</td>
+        <td>${r.book_type==='full'?'文本+语音':(r.book_type==='voice'?'语音':'文本')}</td>
+        <td>${esc(r.customer_name)||'-'}</td><td>${esc(r.contact)||'-'}</td>
+        <td>${r.scheduled_at?new Date(r.scheduled_at).toLocaleString():'-'}</td>
+        <td><span class="badge ${st[r.status][0]}">${st[r.status][1]}</span></td>
+        <td><div class="actions">
+          <button class="btn sm ghost" onclick="setResStatus(${r.id},'confirmed')">确认</button>
+          <button class="btn sm ghost" onclick="setResStatus(${r.id},'completed')">完成</button>
+          <button class="btn sm danger" onclick="setResStatus(${r.id},'cancelled')">取消</button>
+        </div></td></tr>`).join('')}</table></div>`;
+  }catch(e){box.innerHTML=`<div class="empty">${e.message}</div>`;}
+}
+async function setResStatus(id,status){
+  try{await api('/reservations/'+id,'PUT',{status});toast('已更新状态');renderReservations();}catch(e){toast(e.message);}
+}
+
+// ---------- 弹窗 ----------
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+// 为每个弹窗注入右上角 × 关闭按钮，并支持点击蒙层关闭
+function initModals(){
+  document.querySelectorAll('.modal').forEach(m=>{
+    const box=m.querySelector('.modal-box');
+    if(!box||box.querySelector('.modal-close'))return;
+    const btn=document.createElement('button');
+    btn.className='modal-close';
+    btn.type='button';
+    btn.textContent='×';
+    btn.title='关闭';
+    btn.addEventListener('click',()=>closeModal(m.id));
+    box.insertBefore(btn,box.firstChild);
+  });
+  document.addEventListener('click',e=>{
+    if(e.target.classList&&e.target.classList.contains('modal')){
+      e.target.classList.add('hidden');
+    }
+  });
+}
+
+// ---------- 初始化 ----------
+(function(){
+  initModals();
+  if(TOKEN){document.getElementById('login-page').classList.add('hidden');document.getElementById('app-page').classList.remove('hidden');showNav('programs');}
+  document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+})();
+</script>
+</body>
+</html>

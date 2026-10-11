@@ -1,0 +1,27 @@
+{
+  "note": "演示用图片（景区封面 10 张 + 文创商品图 12 张，商品图已全部配齐），均来自公开网络搜索快照（阿里云 OSS 镜像），仅用于开发演示；上线前请替换为自有版权或已授权图片。",
+  "items": [
+    {"file": "area-1.jpg", "area": "邛海泸山景区", "source": "学习强国（航拍湖泊群山）"},
+    {"file": "area-2.jpg", "area": "泸沽湖景区", "source": "四川在线/川观（碧蓝湖泊环抱村落）"},
+    {"file": "area-3.jpg", "area": "螺髻山景区", "source": "四川在线（雪山环抱高山湖泊）"},
+    {"file": "area-4.jpg", "area": "西昌卫星发射中心景区", "source": "国务院国资委（火箭吊装至发射塔架）"},
+    {"file": "area-5.jpg", "area": "会理古城", "source": "川观（古城街巷红灯笼）"},
+    {"file": "area-6.jpg", "area": "彝海景区", "source": "知乎专栏（湖光山色）"},
+    {"file": "area-7.jpg", "area": "灵山景区", "source": "知乎专栏（灵山寺牌楼烟云）"},
+    {"file": "area-8.jpg", "area": "马湖景区", "source": "知乎专栏（青山环抱碧蓝湖泊）"},
+    {"file": "area-9.jpg", "area": "越西文昌故里景区", "source": "携程攻略（文昌阁古塔）"},
+    {"file": "area-10.png", "area": "谷克德高原湿地景区", "source": "搜狐（高原湖泊紫色花海）"},
+    {"file": "product-1.jpg", "product": "彝族漆器·酒具三件套", "source": "人民政协网（彝式彩绘漆器）"},
+    {"file": "product-2.jpg", "product": "彝绣香囊·索玛花", "source": "淘宝好物网（蓝色绣花香囊）"},
+    {"file": "product-3.jpg", "product": "苦荞茶·大凉山礼盒", "source": "ALARGROUP（苦荞茶礼盒设计）"},
+    {"file": "product-4.jpg", "product": "摩梭手工花腰带", "source": "义乌小商品城（编织串珠腰带）"},
+    {"file": "product-5.jpg", "product": "盐源苹果干·128g", "source": "新疆旅游商城（苹果干产品）"},
+    {"file": "product-7.jpg", "product": "长征火箭 1:200 合金模型", "source": "東森購物（中国航天火箭玩具）"},
+    {"file": "product-8.jpg", "product": "会理绿陶·茶具套装", "source": "陶瓷茶具定制（茶席茶具）"},
+    {"file": "product-9.jpg", "product": "彝海结盟·纪念徽章", "source": "1688（纪念徽章产品）"},
+    {"file": "product-10.jpeg", "product": "灵山·高山蜂蜜 250g", "source": "一亩田（蜂巢蜜）"},
+    {"file": "product-12.jpg", "product": "火把节·主题帆布包", "source": "Canva（帆布包）"},
+    {"file": "product-6.jpg", "product": "螺髻山杜鹃·植物标本书签", "source": "Bilibili（过塑树叶标本）"},
+    {"file": "product-11.jpg", "product": "马湖·银鱼干 100g", "source": "淘宝好物网（盘装银鱼）"}
+  ]
+}

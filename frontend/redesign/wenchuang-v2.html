@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文创雅集 · v2 重构预览（戏单方案）</title>
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<style>
+/* ============================================================
+   文创视图 v2 重构预览 —— 「戏单」方案（独立文件，不影响线上）
+   Token 方案：
+     墨台 #160D08（页面底） / 幕布 #221410（区块） / 匣盒 #2C1B13（卡片）
+     朱砂 #C73E3A（印与行动） / 鎏金 #E0A83E（金线与悬停·唯一锐利色）
+     宣纸 #F5EDE0（正文） / 烟墨 #A6907E（次级）
+   字体角色：Ma Shan Zheng 仅 2 处展示位；Noto Serif SC 900 板块标题；
+     Outfit 数字与西文。签名元素：戏单式首屏（竖排书法+日期+朱印）。
+   ============================================================ */
+:root{
+  --ink:#160D08; --curtain:#221410; --lacquer:#2C1B13;
+  --cinnabar:#C73E3A; --cinnabar-deep:#8B1A1A;
+  --gold:#E0A83E; --gold-dim:rgba(224,168,62,.32);
+  --paper:#F5EDE0; --smoke:#A6907E;
+  --serif:'Noto Serif SC',serif; --brush:'Ma Shan Zheng',cursive; --latin:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ink); color:var(--paper); font-family:var(--serif);
+  font-size:14px; line-height:1.7;
+  background-image:
+    radial-gradient(1100px 500px at 85% -8%, rgba(199,62,58,.09), transparent 60%),
+    radial-gradient(900px 420px at 0% 30%, rgba(224,168,62,.05), transparent 55%);
+  background-attachment:fixed;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+a{color:inherit;text-decoration:none}
+img{display:block;width:100%;height:100%;object-fit:cover}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+
+/* ── 顶部条（模拟 header，仅预览用） ─────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+  padding:12px 22px;background:rgba(22,13,8,.86);backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(224,168,62,.14);
+}
+.brand-seal{
+  width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--cinnabar),var(--cinnabar-deep));
+  color:var(--paper);font-family:var(--brush);font-size:19px;line-height:1;
+  border-radius:6px;transform:rotate(-3deg);
+  box-shadow:0 2px 10px rgba(199,62,58,.4);
+}
+.topbar .t{font-family:var(--brush);font-size:21px;letter-spacing:.06em}
+.topbar .tab{
+  margin-left:auto;font-size:12px;color:var(--smoke);letter-spacing:.14em;
+  border:1px solid rgba(224,168,62,.25);border-radius:999px;padding:4px 14px;
+}
+.preview-note{
+  padding:8px 22px;font-size:11px;color:var(--smoke);text-align:center;
+  border-bottom:1px dashed rgba(166,144,126,.25);font-family:var(--latin);
+}
+
+/* ── 戏单首屏（签名元素） ────────────────────────────────── */
+.playbill{
+  max-width:1120px;margin:34px auto 0;padding:0 22px;
+  display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:stretch;
+}
+.bill-side{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  padding:26px 14px;border:1px solid var(--gold-dim);border-radius:10px;
+  background:linear-gradient(180deg,var(--curtain),var(--ink));
+}
+.bill-side .vertical{
+  writing-mode:vertical-rl;font-family:var(--brush);font-size:52px;line-height:1.15;
+  letter-spacing:.12em;color:var(--paper);
+}
+.bill-side .seal{
+  width:34px;height:34px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--cinnabar);color:var(--paper);font-family:var(--brush);
+  font-size:15px;border-radius:5px;transform:rotate(4deg);line-height:1;
+  box-shadow:0 2px 8px rgba(199,62,58,.45);
+}
+.bill-side .date{font-family:var(--latin);font-size:11px;color:var(--smoke);letter-spacing:.08em;white-space:nowrap}
+.bill-main{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+/* 主推卡：一张，占住视线 */
+.bill-hero{
+  position:relative;border-radius:14px;overflow:hidden;
+  border:1px solid var(--gold-dim);background:var(--curtain);
+  min-height:300px;display:flex;align-items:flex-end;
+  transition:border-color .3s ease-out;
+}
+.bill-hero:hover{border-color:var(--gold)}
+.bill-hero .ph{position:absolute;inset:0}
+.bill-hero .ph::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(22,13,8,.05) 30%,rgba(22,13,8,.92) 88%);
+}
+.bill-hero .cap{position:relative;padding:26px 28px;width:100%}
+.bill-hero .eyebrow{
+  font-size:11px;letter-spacing:.32em;color:var(--gold);margin-bottom:8px;
+  display:flex;align-items:center;gap:10px;
+}
+.bill-hero .eyebrow::after{content:'';height:1px;width:44px;background:var(--gold-dim)}
+.bill-hero h1{font-weight:900;font-size:30px;line-height:1.25;margin-bottom:8px}
+.bill-hero p{font-size:13px;color:var(--smoke);max-width:52ch}
+.bill-hero .go{
+  position:absolute;right:24px;bottom:24px;display:flex;align-items:center;gap:8px;
+  background:var(--cinnabar);color:var(--paper);font-size:13px;font-weight:700;
+  padding:10px 20px;border-radius:999px;letter-spacing:.05em;
+  box-shadow:0 4px 16px rgba(199,62,58,.4);transition:transform .3s ease-out,box-shadow .3s ease-out;
+}
+.bill-hero .go:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(199,62,58,.5)}
+
+/* 戏折子行卡：金线 + 序号编码真实场次顺序 */
+.bill-row{
+  display:flex;align-items:center;gap:16px;padding:14px 20px;
+  background:var(--curtain);border:1px solid rgba(224,168,62,.16);border-radius:12px;
+  transition:border-color .3s ease-out,transform .3s ease-out;
+}
+.bill-row:hover{border-color:var(--gold);transform:translateX(4px)}
+.bill-row .no{font-family:var(--latin);font-size:12px;color:var(--gold);letter-spacing:.1em;flex-shrink:0}
+.bill-row .nm{font-weight:700;font-size:15px;white-space:nowrap}
+.bill-row .ds{font-size:12px;color:var(--smoke);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bill-row .st{
+  margin-left:auto;flex-shrink:0;font-size:11px;color:var(--smoke);
+  border:1px solid rgba(166,144,126,.35);border-radius:999px;padding:2px 10px;white-space:nowrap;
+}
+.bill-row .st.on{color:var(--gold);border-color:var(--gold-dim)}
+
+/* ── 分组导航（四折） ────────────────────────────────────── */
+.troupe{
+  max-width:1120px;margin:38px auto 0;padding:0 22px;
+  display:flex;gap:10px;flex-wrap:wrap;
+}
+.troupe button{
+  font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--smoke);
+  padding:10px 22px;border-radius:10px;border:1px solid transparent;
+  transition:all .25s ease-out;
+}
+.troupe button:hover{color:var(--paper);background:rgba(224,168,62,.06)}
+.troupe button.on{
+  color:var(--gold);border-color:var(--gold-dim);background:rgba(224,168,62,.07);
+}
+.troupe button .en{
+  display:block;font-family:var(--latin);font-weight:400;font-size:10px;
+  letter-spacing:.22em;color:var(--smoke);margin-top:2px;
+}
+
+/* ── 板块面板 ────────────────────────────────────────────── */
+.stage{max-width:1120px;margin:26px auto 0;padding:0 22px 70px}
+.panel{display:none;animation:reveal .5s ease-out}
+.panel.on{display:block}
+@keyframes reveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.sec-head .seal-mini{
+  background:var(--cinnabar);color:var(--paper);font-family:var(--brush);
+  font-size:13px;padding:2px 10px;border-radius:4px;letter-spacing:.1em;
+  transform:rotate(-2deg);box-shadow:0 2px 6px rgba(199,62,58,.35);white-space:nowrap;
+}
+.sec-head h2{font-weight:900;font-size:26px;letter-spacing:.02em}
+.sec-head .sub{font-size:12px;color:var(--smoke);margin-left:auto}
+
+/* 主次分明的商品网格：1 主推 + 常规卡 */
+.goods{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.goods .lead{grid-column:span 2;grid-row:span 2}
+.gcard{
+  position:relative;border-radius:13px;overflow:hidden;background:var(--lacquer);
+  border:1px solid rgba(224,168,62,.14);display:flex;flex-direction:column;
+  transition:transform .3s ease-out,border-color .3s ease-out,box-shadow .3s ease-out;
+}
+.gcard:hover{transform:translateY(-4px);border-color:var(--gold-dim);box-shadow:0 14px 30px rgba(0,0,0,.45)}
+.gcard .im{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--curtain)}
+.goods .lead .im{aspect-ratio:auto;flex:1;min-height:340px}
+.gcard .im img{transition:transform .5s ease-out}
+.gcard:hover .im img{transform:scale(1.045)}
+.gcard .tag{
+  position:absolute;top:12px;left:12px;background:rgba(22,13,8,.82);color:var(--gold);
+  font-size:11px;letter-spacing:.18em;padding:3px 12px;border-radius:999px;
+  border:1px solid var(--gold-dim);backdrop-filter:blur(6px);
+}
+.gcard .bd{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px}
+.gcard .nm{font-weight:700;font-size:16px}
+.goods .lead .nm{font-size:22px;font-weight:900}
+.gcard .ds{font-size:12px;color:var(--smoke)}
+.gcard .ft{display:flex;align-items:center;gap:10px;margin-top:8px}
+.gcard .pr{font-family:var(--latin);font-weight:600;font-size:17px;color:var(--gold)}
+.gcard .pr small{font-size:11px;color:var(--smoke);font-weight:400;margin-left:4px}
+.gcard .buy{
+  margin-left:auto;font-size:12px;font-weight:700;color:var(--paper);
+  background:var(--cinnabar);border-radius:999px;padding:7px 18px;letter-spacing:.06em;
+  transition:background .25s ease-out;
+}
+.gcard .buy:hover{background:var(--cinnabar-deep)}
+.gcard .story{
+  font-size:12px;color:var(--smoke);border:1px solid rgba(166,144,126,.3);
+  border-radius:999px;padding:7px 14px;transition:color .25s ease-out,border-color .25s ease-out;
+}
+.gcard .story:hover{color:var(--gold);border-color:var(--gold-dim)}
+
+/* 购物点：印章角标签名 + 主次卡 */
+.spots{display:grid;grid-template-columns:5fr 4fr;gap:16px}
+.spot{
+  position:relative;border-radius:13px;background:var(--lacquer);
+  border:1px solid rgba(224,168,62,.14);padding:22px 24px;overflow:hidden;
+  transition:border-color .3s ease-out;
+}
+.spot:hover{border-color:var(--gold-dim)}
+.spot::before{ /* 签名：右上印章角标 */
+  content:attr(data-seal);position:absolute;top:14px;right:14px;
+  font-family:var(--brush);font-size:13px;color:var(--paper);
+  background:var(--cinnabar);padding:3px 8px;border-radius:4px;
+  transform:rotate(3deg);opacity:.92;box-shadow:0 2px 8px rgba(199,62,58,.4);
+}
+.spot h3{font-weight:900;font-size:20px;margin-bottom:4px}
+.spot .meta{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 12px}
+.spot .meta div{font-size:12px;color:var(--smoke)}
+.spot .meta b{display:block;color:var(--gold);font-size:10px;letter-spacing:.24em;font-weight:400;margin-bottom:2px}
+.spot p{font-size:13px;color:var(--smoke)}
+.spot .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.spot .chips span{
+  font-size:11px;color:var(--paper);background:rgba(224,168,62,.1);
+  border:1px solid var(--gold-dim);border-radius:999px;padding:3px 12px;
+}
+.spot-main{grid-row:span 2;display:flex;flex-direction:column}
+.spot-main .im{aspect-ratio:16/9;border-radius:9px;overflow:hidden;margin:14px 0 4px;border:1px solid rgba(224,168,62,.12)}
+
+/* 数字体验横卡 */
+.digi{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dcard{
+  position:relative;border-radius:13px;overflow:hidden;border:1px solid rgba(224,168,62,.14);
+  background:var(--curtain);min-height:220px;display:flex;align-items:flex-end;
+  transition:border-color .3s ease-out;
+}
+.dcard:hover{border-color:var(--gold)}
+.dcard .ph{position:absolute;inset:0}
+.dcard .ph::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,13,8,.1) 20%,rgba(22,13,8,.9) 92%)}
+.dcard .cap{position:relative;padding:20px 22px}
+.dcard .cap .en{font-family:var(--latin);font-size:10px;letter-spacing:.28em;color:var(--gold);margin-bottom:6px}
+.dcard .cap h3{font-weight:900;font-size:20px}
+.dcard .cap p{font-size:12px;color:var(--smoke);margin-top:4px}
+.dcard .arrow{
+  position:absolute;right:20px;bottom:20px;width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--gold-dim);display:grid;place-items:center;color:var(--gold);
+  font-family:var(--latin);transition:background .25s ease-out,color .25s ease-out;
+}
+.dcard:hover .arrow{background:var(--gold);color:var(--ink)}
+
+/* ── 移动端（375px 自检） ───────────────────────────────── */
+@media (max-width:720px){
+  .topbar{padding:10px 14px;gap:10px}
+  .topbar .t{font-size:17px;white-space:nowrap}
+  .topbar .tab{display:none} /* 窄屏收起预览徽标，防换行 */
+  .playbill{grid-template-columns:1fr;gap:20px}
+  .bill-side{flex-direction:row;justify-content:flex-start;padding:18px}
+  .bill-side .vertical{writing-mode:horizontal-tb;font-size:34px}
+  .bill-hero{min-height:220px}
+  .bill-hero h1{font-size:22px}
+  .bill-hero .go{position:static;margin-top:14px;display:inline-flex}
+  .goods,.spots,.digi{grid-template-columns:1fr}
+  .goods .lead{grid-column:auto;grid-row:auto}
+  .goods .lead .im{min-height:0;aspect-ratio:4/3}
+  .spot-main{grid-row:auto}
+  .bill-row .ds{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand-seal">川剧</div>
+  <div class="t">四川省川剧院</div>
+  <span class="tab">文创雅集 · v2 预览</span>
+</header>
+<div class="preview-note">REDESIGN PREVIEW — 原版页面未做任何改动 · 本页为静态方案稿</div>
+
+<!-- 签名元素：戏单式首屏 -->
+<section class="playbill">
+  <aside class="bill-side">
+    <div class="vertical">文創雅集</div>
+    <div class="seal">觀</div>
+    <div class="date" id="bill-date">2026.08.31</div>
+  </aside>
+  <div class="bill-main">
+    <div class="bill-hero">
+      <div class="ph"><img src="../assets/photoshoot_default.jpg" alt="AI 旅拍"></div>
+      <div class="cap">
+        <div class="eyebrow">今日主打</div>
+        <h1>穿一身戏装，做一回角儿</h1>
+        <p>AI 旅拍换装上新：一键换装、名角同框、戏台穿越——散场前把这张「戏照」带走。</p>
+        <a class="go" href="javascript:void(0)">开始旅拍 →</a>
+      </div>
+    </div>
+    <div class="bill-row">
+      <span class="no">貳</span><span class="nm">购物点导览</span>
+      <span class="ds">剧院内外购物点：位置、营业时间与特色推荐</span>
+      <span class="st on">本日可见</span>
+    </div>
+    <div class="bill-row">
+      <span class="no">叁</span><span class="nm">面具典故</span>
+      <span class="ds">每一张脸谱背后都有一段可听的故事</span>
+      <span class="st on">语音 · 3 段</span>
+    </div>
+    <div class="bill-row">
+      <span class="no">肆</span><span class="nm">川剧生活</span>
+      <span class="ds">盖碗茶与戏台边的闲适午后</span>
+      <span class="st">茶香正好</span>
+    </div>
+  </div>
+</section>
+
+<!-- 四折分组导航（11 板块归组，替代彩虹图标平铺） -->
+<nav class="troupe" id="troupe">
+  <button class="on" data-p="p-guan">观演延伸<span class="en">TAKEHOME</span></button>
+  <button data-p="p-shuzi">数字体验<span class="en">DIGITAL</span></button>
+  <button data-p="p-gong">共创参与<span class="en">CO-CREATE</span></button>
+  <button data-p="p-sheng">文化生活<span class="en">LIFE</span></button>
+</nav>
+
+<main class="stage">
+
+  <!-- 观演延伸：购物点（签名：印章角标）+ 商城（1 主推 + 网格） -->
+  <section class="panel on" id="p-guan">
+    <div class="sec-head">
+      <span class="seal-mini">觀演</span><h2>观演延伸</h2>
+      <span class="sub">看戏之外，把川剧带在身上</span>
+    </div>
+    <div class="spots">
+      <div class="spot spot-main" data-seal="大堂">
+        <h3>文创商店 · 一层大堂东侧</h3>
+        <div class="im"><img src="../assets/products/furong_mask_pendant.jpg" alt="文创商店"></div>
+        <div class="meta">
+          <div><b>營業</b>演出日 18:00 – 22:00</div>
+          <div><b>特色</b>脸谱周边 · 伴手礼</div>
+        </div>
+        <p>集见面具、折扇、蜀绣等川剧特色纪念品，散场顺路即取。</p>
+        <div class="chips"><span>脸谱周边</span><span>蜀绣</span><span>伴手礼</span></div>
+      </div>
+      <div class="spot" data-seal="茶房">
+        <h3>盖碗茶铺 · 中庭回廊</h3>
+        <div class="meta">
+          <div><b>營業</b>每日 14:00 – 21:30</div>
+          <div><b>特色</b>盖碗茶 · 戏点心上</div>
+        </div>
+        <p>开锣前一盏三花，配一碟 Vanishing 点心，戏里戏外都是成都。</p>
+        <div class="chips"><span>盖碗茶</span><span>茶点</span></div>
+      </div>
+      <div class="spot" data-seal="書肆">
+        <h3>戏文書肆 · 二层环廊</h3>
+        <div class="meta">
+          <div><b>營業</b>周末 10:00 – 20:00</div>
+          <div><b>特色</b>剧本 · 唱本文创</div>
+        </div>
+        <p>绝版唱本、手抄戏折与机构出版物，给懂行的人留了一格书架。</p>
+        <div class="chips"><span>唱本</span><span>戏折</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数字体验 -->
+  <section class="panel" id="p-shuzi">
+    <div class="sec-head">
+      <span class="seal-mini">數字</span><h2>数字体验</h2>
+      <span class="sub">新技术，老味道</span>
+    </div>
+    <div class="digi">
+      <div class="dcard">
+        <div class="ph"><img src="../assets/mask-gold-ai.jpg" alt="知识图谱"></div>
+        <div class="cap"><div class="en">KNOWLEDGE GRAPH</div><h3>川剧知识图谱</h3><p>22 个节点串起声腔、行当与名家——像翻一张会长的关系网。</p></div>
+        <div class="arrow">↗</div>
+      </div>
+      <div class="dcard">
+        <div class="ph"><img src="../assets/mask-blue-ai.jpg" alt="VR 展馆"></div>
+        <div class="cap"><div class="en">VR EXHIBITION</div><h3>VR 全景展馆</h3><p>不出戏园子，走进后台衣箱与万年台的全景世界。</p></div>
+        <div class="arrow">↗</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 共创参与 -->
+  <section class="panel" id="p-gong">
+    <div class="sec-head">
+      <span class="seal-mini">共創</span><h2>共创参与</h2>
+      <span class="sub">这座戏台，也留给新人</span>
+    </div>
+    <div class="goods">
+      <div class="gcard lead">
+        <div class="im"><img src="../assets/products/mask_gold_dragon.jpg" alt="IP 铸造"></div>
+        <div class="bd">
+          <div class="nm">IP 铸造 · 金龙脸谱</div>
+          <div class="ds">把你的设计铸成链上数字藏品，版权与分成皆可追溯。</div>
+          <div class="ft"><span class="pr">0.06 ETH<small>铸造中</small></span><button class="buy">去铸造</button></div>
+        </div>
+      </div>
+      <div class="gcard">
+        <div class="im"><img src="../assets/products/furong_embroidery_frame.jpg" alt="众创平台"></div>
+        <div class="bd"><div class="nm">众创平台</div><div class="ds">任务广场 · 智库 · 创意工坊</div></div>
+      </div>
+      <div class="gcard">
+        <div class="im"><img src="../assets/products/furong_shushi_tapestry.jpg" alt="IP 资产库"></div>
+        <div class="bd"><div class="nm">IP 资产库</div><div class="ds">11 件非遗数字资产，凭授权取用</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 文化生活 -->
+  <section class="panel" id="p-sheng">
+    <div class="sec-head">
+      <span class="seal-mini">生活</span><h2>文化生活</h2>
+      <span class="sub">戏外之事，皆是文章</span>
+    </div>
+    <div class="goods" style="grid-template-columns:1fr 1fr">
+      <div class="gcard">
+        <div class="im"><img src="../assets/products/furong_gaiwan_teaset.jpg" alt="川剧生活"></div>
+        <div class="bd"><div class="nm">川剧生活</div><div class="ds">盖碗茶、戏台边、慢半拍的成都节奏</div></div>
+      </div>
+      <div class="gcard">
+        <div class="im"><img src="../assets/products/furong_bamboo_fan.jpg" alt="川剧世界"></div>
+        <div class="bd"><div class="nm">川剧世界</div><div class="ds">30+ 巡演国家 · 120+ 场海外专场</div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* 预览页交互：四折分组切换（正式实现将并入 switchWenchuangSubView 白名单体系） */
+document.getElementById('bill-date').textContent =
+  new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'})
+    .replace(/\//g,'.');
+var btns=document.querySelectorAll('#troupe button');
+btns.forEach(function(b){
+  b.addEventListener('click',function(){
+    btns.forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on');
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on')});
+    document.getElementById(b.dataset.p).classList.add('on');
+  });
+});
+</script>
+</body>
+</html>

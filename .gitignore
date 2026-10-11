@@ -1,0 +1,27 @@
+# 环境与密钥（含 JWT 密钥/凭证，严禁入库）
+.env
+*.env
+!*.env.example
+.jwt_tmp
+.jwt_tmp/
+.sid_tmp
+.sid_tmp/
+
+# 数据库与运行产物
+*.db
+*.sqlite3
+*.log
+
+# Python 产物
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 截图/临时产物
+_qa_shots/
+.verify-shots/
+.tmp-shots/
+
+# 其他工具目录与构建产物
+.trae/
+node_modules/

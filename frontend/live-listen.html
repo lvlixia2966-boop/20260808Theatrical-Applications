@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>正在跳转…</title>
+<script>
+/* 收听席已整合进首页（index.html「收听」视图），本页仅做旧链接兼容跳转。
+ * 保留 ?code= 会场码直达能力：index.html 的收听席模块会读取该参数自动进场。 */
+(function () {
+  var q = new URLSearchParams(location.search);
+  var target = 'index.html?view=livelisten';
+  var code = q.get('code');
+  if (code) target += '&code=' + encodeURIComponent(code);
+  if (q.has('demo')) target += '&demo=1';
+  location.replace(target);
+})();
+</script>
+</head>
+<body style="background:#0F0A07;color:#F5EDE0;font-family:sans-serif;text-align:center;padding-top:40vh">
+  正在进入收听席…
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>文创雅集 · v5 变脸首屏预览</title>
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<style>
+/* ============================================================
+   文创视图 v5 —— 「变脸」方案：移动优先 + 全屏惊艳首屏
+   诊断：v2-v4 布局没问题，缺的是视觉冲击力。川剧最"一眼惊艳"
+   的就是变脸瞬间——本版把它从装饰升格为交互本身：
+     · 首屏 = 全屏脸谱（full-bleed 占满视口），自动变脸循环
+     · 变脸手法：金光临面横扫 + clip-path 擦除换脸（0.6s）
+     · 色彩拉满：纯朱砂 #C73E3A + 鎏金 #E8B34B + 近纯黑 #0A0604
+     · 首屏只有一张脸 + 一行书法 + 一个按钮，滚动后内容展开
+   性能：clip-path/transform 全 GPU 合成层，低端机可跑；
+   reduced-motion 下停自动变脸，保留手动点击。
+   ============================================================ */
+:root{
+  --black:#0A0604; --cinnabar:#C73E3A; --gold:#E8B34B;
+  --paper:#F5EDE0; --smoke:#9A8471; --lacquer:#171009;
+  --serif:'Noto Serif SC',serif; --brush:'Ma Shan Zheng',cursive; --latin:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--black);color:var(--paper);font-family:var(--serif);font-size:15px;line-height:1.7}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .face .sweep{display:none}
+}
+img{display:block;width:100%;height:100%;object-fit:cover}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ═══ 首屏：全屏变脸 ═══════════════════════════════════ */
+.stage{
+  position:relative;height:100svh;min-height:560px;overflow:hidden;
+  background:var(--black);
+}
+/* 两层脸：底层常显，顶层被金线擦出。
+   聚光遮罩：方图脸谱自带米色底，竖屏 full-bleed 会露边——
+   放大 1.5 倍把米边推出视口，再用径向遮罩让边缘羽化进黑底，
+   形成剧场追光打在脸上的效果（比原图直铺更惊艳，且省掉重做素材）。 */
+.face{
+  position:absolute;inset:0;
+  -webkit-mask-image:radial-gradient(ellipse 82% 66% at 50% 36%,#000 42%,rgba(0,0,0,.35) 74%,transparent 96%);
+  mask-image:radial-gradient(ellipse 82% 66% at 50% 36%,#000 42%,rgba(0,0,0,.35) 74%,transparent 96%);
+}
+.face .layer{position:absolute;inset:0;overflow:hidden}
+.face .layer img{
+  width:100%;height:100%;object-fit:cover;object-position:center 28%;
+  transform:scale(1.5);
+}
+.face .top{clip-path:inset(0 0 0 0)}
+/* 变脸瞬间：金线擦入前沿与 clip-path 边界严格同步（0~55% 完成擦除） */
+.stage.flipping .top{animation:wipe .62s cubic-bezier(.7,0,.3,1) forwards}
+.stage.flipping .sweep{animation:sweepx .62s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes wipe{
+  0%{clip-path:inset(0 100% 0 0)}
+  55%{clip-path:inset(0 0 0 0)}
+  100%{clip-path:inset(0 0 0 0)}
+}
+.sweep{
+  position:absolute;top:-10%;bottom:-10%;left:0;width:46%;
+  background:linear-gradient(100deg,
+    transparent 0%,
+    rgba(232,179,75,0) 20%,
+    rgba(232,179,75,.5) 44%,
+    #FFDD9A 50%,
+    rgba(199,62,58,.55) 56%,
+    rgba(199,62,58,0) 80%,
+    transparent 100%);
+  mix-blend-mode:screen;
+  transform:translateX(-60%);
+  pointer-events:none;
+}
+/* 金线中心（50% 处）对齐擦除前沿：0%→-60%，55%→170%，100%→240% 出屏 */
+@keyframes sweepx{
+  0%{transform:translateX(-60%)}
+  55%{transform:translateX(170%)}
+  100%{transform:translateX(240%)}
+}
+/* 暗角 + 上下压暗：顶部压暗救 brand 文字对比度，底部承托书法大字 */
+.stage::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 50% 16%, transparent 50%, rgba(10,6,4,.6) 100%),
+    linear-gradient(180deg, rgba(10,6,4,.82) 0%, rgba(10,6,4,.3) 14%, transparent 30%, transparent 50%, rgba(10,6,4,.92) 92%);
+}
+/* 顶部小字 */
+.stage .brand{
+  position:absolute;top:calc(18px + env(safe-area-inset-top,0px));left:0;right:0;
+  z-index:5;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;font-family:var(--latin);font-size:10px;letter-spacing:.3em;
+  color:rgba(245,237,224,.75);
+}
+.stage .brand .sq{
+  font-family:var(--brush);letter-spacing:0;font-size:15px;color:var(--paper);
+  background:var(--cinnabar);padding:3px 9px;border-radius:3px;transform:rotate(-2deg);
+}
+/* 书法大字：一行，压住画面 */
+.stage .title{
+  position:absolute;left:0;right:0;bottom:172px;z-index:5;text-align:center;
+  pointer-events:none;
+}
+.stage .title .big{
+  font-family:var(--brush);font-size:76px;line-height:1;letter-spacing:.08em;
+  color:var(--paper);
+  text-shadow:0 6px 30px rgba(10,6,4,.85), 0 0 60px rgba(199,62,58,.35);
+}
+.stage .title .sub{
+  margin-top:12px;font-size:12px;letter-spacing:.5em;text-indent:.5em;color:var(--gold);
+  font-weight:700;
+}
+/* 变脸按钮：点一下换一张脸 */
+.flip-btn{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:100px;z-index:6;
+  display:flex;align-items:center;gap:10px;min-height:48px;padding:0 26px;
+  border-radius:999px;border:1px solid rgba(232,179,75,.55);
+  background:rgba(10,6,4,.45);backdrop-filter:blur(8px);
+  color:var(--gold);font-size:14px;font-weight:700;letter-spacing:.2em;text-indent:.2em;
+  transition:background .3s ease-out,border-color .3s ease-out;
+}
+.flip-btn:active{background:var(--cinnabar);border-color:var(--cinnabar);color:var(--paper)}
+.flip-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+/* 当前脸名（变脸后浮现）：加大加亮，海报上必须读得到 */
+.face-name{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:44px;z-index:5;
+  font-family:var(--latin);font-size:12px;font-weight:600;letter-spacing:.34em;text-indent:.34em;
+  color:rgba(232,179,75,.85);white-space:nowrap;
+  text-shadow:0 2px 12px rgba(10,6,4,.9);
+  opacity:0;transition:opacity .5s ease-out .35s;
+}
+.face-name.show{opacity:1}
+/* 下滑提示 */
+.chev{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:5;
+  width:22px;height:22px;border-right:1.5px solid rgba(245,237,224,.5);
+  border-bottom:1.5px solid rgba(245,237,224,.5);transform:translateX(-50%) rotate(45deg);
+  animation:chevb 2.2s ease-in-out infinite;
+}
+@keyframes chevb{0%,100%{margin-bottom:0;opacity:.5}50%{margin-bottom:7px;opacity:1}}
+
+/* ═══ 第二屏起：内容区（高饱和延续）═══════════════════ */
+.wrap{max-width:560px;margin:0 auto;padding:0 18px 90px}
+.sect{padding-top:56px;scroll-margin-top:10px}
+.kicker{
+  display:flex;align-items:center;gap:12px;margin-bottom:16px;
+}
+.kicker .seal{
+  font-family:var(--brush);font-size:14px;color:var(--paper);
+  background:var(--cinnabar);padding:3px 10px;border-radius:4px;
+  transform:rotate(-2deg);box-shadow:0 3px 12px rgba(199,62,58,.5);white-space:nowrap;
+}
+.kicker h2{font-weight:900;font-size:24px;letter-spacing:.02em}
+.kicker .en{margin-left:auto;font-family:var(--latin);font-size:9px;letter-spacing:.3em;color:var(--smoke)}
+.kicker::after{display:none}
+
+/* 大卡：图占满、文字压底，朱砂/鎏金双色体系 */
+.big-card{
+  position:relative;border-radius:18px;overflow:hidden;aspect-ratio:4/5;max-height:72vh;
+  border:1px solid rgba(232,179,75,.28);
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+}
+.big-card img{position:absolute;inset:0}
+.big-card .veil{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 42%,rgba(10,6,4,.9) 88%);
+}
+.big-card .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 22px 24px}
+.big-card .cap .eb{font-size:10px;letter-spacing:.34em;color:var(--gold);margin-bottom:6px}
+.big-card .cap h3{font-weight:900;font-size:26px;line-height:1.25}
+.big-card .cap p{font-size:12px;color:rgba(245,237,224,.7);margin-top:6px}
+.big-card .cta{
+  display:inline-flex;align-items:center;gap:8px;margin-top:14px;min-height:44px;
+  padding:0 22px;border-radius:999px;background:var(--cinnabar);
+  font-size:13px;font-weight:700;letter-spacing:.12em;
+  box-shadow:0 6px 22px rgba(199,62,58,.5);
+}
+
+/* 购物点：金线竖排目录感（位置/营业用大字数字） */
+.spot-list{display:flex;flex-direction:column;gap:14px}
+.spot{
+  position:relative;display:flex;gap:16px;align-items:stretch;
+  background:var(--lacquer);border:1px solid rgba(232,179,75,.16);
+  border-radius:16px;overflow:hidden;
+}
+.spot .im{width:118px;flex-shrink:0;position:relative;background:#000}
+.spot .im::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 62%,var(--lacquer) 100%)}
+.spot .bd{padding:14px 16px 14px 0;flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.spot h3{font-weight:900;font-size:17px}
+.spot .row{font-size:12px;color:var(--smoke)}
+.spot .row b{color:var(--gold);font-family:var(--latin);font-weight:600;font-size:13px}
+.spot .no{
+  position:absolute;right:12px;top:10px;font-family:var(--latin);
+  font-size:34px;font-weight:800;line-height:1;color:rgba(232,179,75,.14);
+}
+
+/* 商城：横滑大票 */
+.hcards{display:flex;gap:14px;overflow-x:auto;padding:4px 18px 14px;margin:0 -18px;
+  scroll-snap-type:x mandatory;scrollbar-width:none}
+.hcards::-webkit-scrollbar{display:none}
+.gcard{
+  flex-shrink:0;width:236px;scroll-snap-align:center;border-radius:16px;overflow:hidden;
+  background:var(--lacquer);border:1px solid rgba(232,179,75,.16);
+  display:flex;flex-direction:column;
+}
+.gcard.lead{width:280px;border-color:rgba(232,179,75,.42)}
+.gcard .im{aspect-ratio:1/1;position:relative;background:#000}
+.gcard .im::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(23,16,9,.95) 100%)}
+.gcard .tag{
+  position:absolute;top:12px;left:12px;z-index:2;font-size:10px;letter-spacing:.2em;color:var(--black);
+  background:var(--gold);padding:4px 12px;border-radius:999px;font-weight:700;
+}
+.gcard .bd{padding:0 16px 16px;margin-top:-26px;position:relative;z-index:2}
+.gcard .nm{font-weight:900;font-size:17px}
+.gcard .ds{font-size:11px;color:var(--smoke);margin-top:2px}
+.gcard .ft{display:flex;align-items:center;margin-top:12px;gap:8px}
+.gcard .pr{font-family:var(--latin);font-weight:800;font-size:22px;color:var(--gold)}
+.gcard .pr small{font-size:11px;color:var(--smoke);font-weight:400;margin-left:3px}
+.gcard .buy{
+  margin-left:auto;min-width:44px;min-height:44px;padding:0 18px;border-radius:999px;
+  background:var(--cinnabar);font-size:13px;font-weight:700;letter-spacing:.06em;
+  box-shadow:0 4px 16px rgba(199,62,58,.42);
+}
+.gcard .story{
+  min-height:44px;padding:0 14px;border-radius:999px;font-size:12px;color:var(--gold);
+  border:1px solid rgba(232,179,75,.4);
+}
+
+/* 典故：横向唱片条 */
+.tracks{display:flex;flex-direction:column;gap:12px}
+.track{
+  display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:14px;
+  background:var(--lacquer);border:1px solid rgba(232,179,75,.14);min-height:68px;
+}
+.track .im{width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0}
+.track .tx{flex:1;min-width:0}
+.track .tx b{display:block;font-size:15px;font-weight:700}
+.track .tx span{display:block;font-size:11px;color:var(--smoke);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track .play{
+  width:44px;height:44px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  border:1px solid var(--gold);color:var(--gold);
+}
+.track .play svg{width:16px;height:16px;fill:currentColor}
+
+/* 数字体验：通栏 */
+.dcard{
+  display:flex;border-radius:16px;overflow:hidden;margin-bottom:14px;min-height:118px;
+  background:var(--lacquer);border:1px solid rgba(232,179,75,.16);
+}
+.dcard .im{width:122px;flex-shrink:0;background:#000}
+.dcard .cap{padding:16px 16px 14px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.dcard .en{font-family:var(--latin);font-size:9px;letter-spacing:.3em;color:var(--gold);margin-bottom:4px}
+.dcard h3{font-weight:900;font-size:17px}
+.dcard p{font-size:11px;color:var(--smoke);margin-top:3px}
+
+/* 页脚 */
+.foot{margin-top:60px;padding-top:22px;border-top:1px solid rgba(232,179,75,.16);
+  text-align:center;font-family:var(--latin);font-size:10px;letter-spacing:.28em;color:var(--smoke)}
+.foot .seal-line{font-family:var(--brush);font-size:20px;letter-spacing:.1em;color:var(--paper);margin-bottom:6px}
+
+@media (min-width:768px){
+  .wrap{max-width:720px}
+  .stage .title .big{font-size:104px}
+  .big-card{aspect-ratio:16/12}
+  .spot-list{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ 首屏：全屏变脸（签名） ═══ -->
+<section class="stage" id="stage">
+  <div class="face">
+    <div class="layer"><img id="imgA" src="../assets/mask-red-ai.jpg" alt="川剧脸谱"></div>
+    <div class="layer top"><img id="imgB" src="../assets/mask-gold-ai.jpg" alt=""></div>
+    <div class="sweep"></div>
+  </div>
+
+  <div class="brand">
+    <span>四川省川剧院</span>
+    <span class="sq">戲</span>
+    <span>SC · 2026</span>
+  </div>
+
+  <div class="title">
+    <div class="big">變臉</div>
+    <div class="sub">一 秒 千 面 · 文 創 雅 集</div>
+  </div>
+
+  <button class="flip-btn" id="flipBtn">
+    <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2" stroke-linecap="round"/><path d="M18.5 2.5v3.5H15M5.5 21.5V18H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    变一张
+  </button>
+  <div class="face-name show" id="faceName">红脸 · 忠义</div>
+  <div class="chev"></div>
+</section>
+
+<div class="wrap">
+
+  <!-- 今日主打 -->
+  <section class="sect">
+    <div class="kicker"><span class="seal">主打</span><h2>AI 旅拍</h2><span class="en">PHOTOSHOOT</span></div>
+    <div class="big-card">
+      <img src="../assets/photoshoot_default.jpg" alt="AI 旅拍" loading="lazy">
+      <div class="veil"></div>
+      <div class="cap">
+        <div class="eb">散场前，把这张戏照带走</div>
+        <h3>穿一身戏装<br>做一回角儿</h3>
+        <p>一键换装 · 名角同框 · 戏台穿越 · 绝技吐火</p>
+        <a class="cta" href="javascript:void(0)">开始旅拍 →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 购物点 -->
+  <section class="sect">
+    <div class="kicker"><span class="seal">周邊</span><h2>购物点导览</h2><span class="en">SPOTS</span></div>
+    <div class="spot-list">
+      <article class="spot">
+        <div class="im"><img src="../assets/products/furong_mask_pendant.jpg" alt="文创商店" loading="lazy"></div>
+        <div class="bd">
+          <h3>文创商店</h3>
+          <div class="row">一层大堂东侧 · <b>18:00–22:00</b></div>
+          <div class="row">脸谱挂坠、折扇、蜀绣伴手礼</div>
+        </div>
+        <span class="no">01</span>
+      </article>
+      <article class="spot">
+        <div class="im"><img src="../assets/products/furong_gaiwan_teaset.jpg" alt="盖碗茶铺" loading="lazy"></div>
+        <div class="bd">
+          <h3>盖碗茶铺</h3>
+          <div class="row">中庭回廊 · <b>14:00–21:30</b></div>
+          <div class="row">开锣前一盏三花，配一碟戏点</div>
+        </div>
+        <span class="no">02</span>
+      </article>
+      <article class="spot">
+        <div class="im"><img src="../assets/products/furong_opera_pottery.jpg" alt="戏文书肆" loading="lazy"></div>
+        <div class="bd">
+          <h3>戏文書肆</h3>
+          <div class="row">二层环廊 · <b>周末 10:00–20:00</b></div>
+          <div class="row">绝版唱本、手抄戏折、院藏出版物</div>
+        </div>
+        <span class="no">03</span>
+      </article>
+    </div>
+  </section>
+
+  <!-- 商城 -->
+  <section class="sect">
+    <div class="kicker"><span class="seal">在售</span><h2>文创商城</h2><span class="en">SHOP</span></div>
+    <div class="hcards">
+      <article class="gcard lead">
+        <div class="im"><img src="../assets/products/furong_wusheng_sword.jpg" alt="芙蓉武生剑" loading="lazy"><span class="tag">限量编号</span></div>
+        <div class="bd">
+          <div class="nm">芙蓉武生剑 · 摆件</div>
+          <div class="ds">武生佩剑 1:2 复刻 · 附院藏证书</div>
+          <div class="ft"><span class="pr">¥299</span><button class="buy">加购</button></div>
+        </div>
+      </article>
+      <article class="gcard">
+        <div class="im"><img src="../assets/products/mask_blue_tiger.jpg" alt="蓝虎脸谱" loading="lazy"><span class="tag">孤品</span></div>
+        <div class="bd">
+          <div class="nm">蓝虎脸谱 · 壁挂</div>
+          <div class="ds">手工彩绘，每脸皆孤品</div>
+          <div class="ft"><button class="story">♪ 典故</button><button class="buy">加购</button></div>
+        </div>
+      </article>
+      <article class="gcard">
+        <div class="im"><img src="../assets/products/furong_bamboo_fan.jpg" alt="竹折扇" loading="lazy"></div>
+        <div class="bd">
+          <div class="nm">戏腔竹折扇</div>
+          <div class="ds">扇面手绘脸谱，开合有响</div>
+          <div class="ft"><span class="pr">¥69</span><button class="buy">加购</button></div>
+        </div>
+      </article>
+      <article class="gcard">
+        <div class="im"><img src="../assets/products/furong_embroidery_frame.jpg" alt="蜀绣框画" loading="lazy"></div>
+        <div class="bd">
+          <div class="nm">蜀绣 · 脸谱框画</div>
+          <div class="ds">非遗蜀绣工艺，装裱成品</div>
+          <div class="ft"><span class="pr">¥188</span><button class="buy">加购</button></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 面具典故 -->
+  <section class="sect">
+    <div class="kicker"><span class="seal">典</span><h2>面具典故</h2><span class="en">AUDIO · 3</span></div>
+    <div class="tracks">
+      <div class="track">
+        <div class="im"><img src="../assets/mask-red-ai.jpg" alt="红脸" loading="lazy"></div>
+        <div class="tx"><b>关公脸 · 忠义之色</b><span>为什么红脸站 C 位</span></div>
+        <button class="play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      </div>
+      <div class="track">
+        <div class="im"><img src="../assets/mask-gold-ai.jpg" alt="金脸" loading="lazy"></div>
+        <div class="tx"><b>金龙脸 · 神佛之相</b><span>金色为何只给神仙画</span></div>
+        <button class="play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      </div>
+      <div class="track">
+        <div class="im"><img src="../assets/mask-black-ai.jpg" alt="黑脸" loading="lazy"></div>
+        <div class="tx"><b>包公脸 · 铁面无私</b><span>黑脸额头的那道月牙</span></div>
+        <button class="play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数字体验 -->
+  <section class="sect">
+    <div class="kicker"><span class="seal">數字</span><h2>数字体验</h2><span class="en">DIGITAL</span></div>
+    <a class="dcard" href="javascript:void(0)">
+      <div class="im"><img src="../assets/mask-green-ai.jpg" alt="知识图谱" loading="lazy"></div>
+      <div class="cap"><div class="en">KNOWLEDGE GRAPH</div><h3>川剧知识图谱</h3><p>22 个节点串起声腔、行当与名家</p></div>
+    </a>
+    <a class="dcard" href="javascript:void(0)">
+      <div class="im"><img src="../assets/mask-blue-ai.jpg" alt="VR 展馆" loading="lazy"></div>
+      <div class="cap"><div class="en">VR EXHIBITION</div><h3>VR 全景展馆</h3><p>走进后台衣箱与万年台的全景世界</p></div>
+    </a>
+  </section>
+
+  <footer class="foot">
+    <div class="seal-line">四川省川剧院</div>
+    WEN &amp; CHUANG · 2026 · 现场演示版
+  </footer>
+
+</div>
+
+<script>
+/* 变脸引擎：金线横扫 + 新脸擦入；自动循环（8s）+ 手动「变一张」。
+ * reduced-motion 下停自动循环，保留手动点击。 */
+(function(){
+  var FACES=[
+    {img:'../assets/mask-red-ai.jpg',   name:'红脸 · 忠义'},
+    {img:'../assets/mask-gold-ai.jpg',  name:'金脸 · 神佛'},
+    {img:'../assets/mask-blue-ai.jpg',  name:'蓝脸 · 刚猛'},
+    {img:'../assets/mask-green-ai.jpg', name:'绿脸 · 草莽'},
+    {img:'../assets/mask-black-ai.jpg',  name:'黑脸 · 铁面'},
+    {img:'../assets/mask-white-ai.jpg', name:'白脸 · 奸雄'}
+  ];
+  var stage=document.getElementById('stage'),
+      imgA=document.getElementById('imgA'), imgB=document.getElementById('imgB'),
+      nameEl=document.getElementById('faceName'), flipBtn=document.getElementById('flipBtn');
+  var cur=0, flipping=false;
+  var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  /* 预载全部脸谱，变脸瞬间不空帧 */
+  FACES.forEach(function(f){var i=new Image();i.src=f.img;});
+
+  function flip(){
+    if(flipping) return;
+    flipping=true;
+    var next=(cur+1)%FACES.length;
+    imgB.src=FACES[next].img;
+    nameEl.classList.remove('show');
+    stage.classList.add('flipping');
+    /* 动画结束后：把新脸落到常显层，重置擦除状态 */
+    setTimeout(function(){
+      imgA.src=FACES[next].img;
+      stage.classList.remove('flipping');
+      imgB.src=FACES[next].img;
+      nameEl.textContent=FACES[next].name;
+      nameEl.classList.add('show');
+      cur=next; flipping=false;
+    },640);
+  }
+  flipBtn.addEventListener('click',flip);
+  /* 点脸谱任意处也变脸（整屏可交互的惊喜感） */
+  stage.addEventListener('click',function(e){
+    if(e.target.closest('.flip-btn'))return;
+    flip();
+  });
+  if(!reduced){
+    setInterval(function(){
+      /* 页面不可见时不跑，省电 */
+      if(!document.hidden && !flipping) flip();
+    },8000);
+  }
+})();
+</script>
+</body>
+</html>

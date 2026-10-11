@@ -1,0 +1,6 @@
+# 运行时数据与本地环境不入库
+__pycache__/
+*.pyc
+backend/banyou.db
+backend/.env
+backend/uploads/.keep
